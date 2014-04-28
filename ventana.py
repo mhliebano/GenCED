@@ -416,13 +416,37 @@ class Ventana:
         seleccionFila=listaObjetos.get_selection()
         listaObjetos.connect("row-activated", self.muestraAtributos,seleccionFila,cntScript)
         #lado Izquierdo
-
-        #cell = gtk.CellRendererText()
-        #objSel=gtk.ComboBox(lista)
-        #objSel.pack_start(cell, True)
-        #objSel.add_attribute(cell, "text", 0)
+        listaIzquierda=gtk.TreeStore(str,str)
+        padre=listaIzquierda.append(None,["Variables",None])
+        f=listaIzquierda.append(padre,["nueva variable",gtk.STOCK_DND_MULTIPLE])
+        padre=listaIzquierda.append(None,["Funciones",None])
+        f=listaIzquierda.append(padre,["nueva funcion",gtk.STOCK_DND_MULTIPLE])
+        padre=listaIzquierda.append(None,["Metodos",None])
+        f=listaIzquierda.append(padre,["mostrar",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["ocultar",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["mover",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["redimensionar",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["rotar",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["mensaje",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["confirmacion",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["entrada",gtk.STOCK_DND_MULTIPLE])
+        padre=listaIzquierda.append(None,["Controles de Flujo",None])
+        f=listaIzquierda.append(padre,["Si",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["Mientras",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["Desde-Hasta",gtk.STOCK_DND_MULTIPLE])
+        listaMetodos = gtk.TreeView()
+        listaMetodos.set_model(listaIzquierda)
+        lacolumna2 = gtk.TreeViewColumn("Metodos")
+        listaMetodos.append_column(lacolumna2)
+        celda2 = gtk.CellRendererText()
+        lacolumna2.pack_start(celda2, True)
+        lacolumna2.add_attribute(celda2, "text", 0)
+        seleccionFila2=listaMetodos.get_selection()
+        listaMetodos.connect("row-activated", self.muestraAtributos2,seleccionFila2,cntScript)
+        
         caja.pack_start(listaObjetos,False)
         caja.pack_start(txtScript)
+        caja.pack_start(listaMetodos,False)
         window.add(caja)
         window.show_all()
     
@@ -433,6 +457,15 @@ class Ventana:
             self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0]))
             base=escrito.get_text(*escrito.get_bounds())
             base=base + str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":\n\t\n"
+            escrito.set_text(base)
+    
+    def muestraAtributos2(self,treeview,itera, path, fila,escrito):
+        (mod,ite)= fila.get_selected_rows()
+        iterador= ite[0]
+        if len(iterador)==2:
+            self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[1]))
+            base=escrito.get_text(*escrito.get_bounds())
+            base=base + str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":\n"
             escrito.set_text(base)
     
     def _pintaNumeros(self,window,event,text_buffer,text_view,objetos):
