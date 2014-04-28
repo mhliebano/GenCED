@@ -392,13 +392,14 @@ class Ventana:
         txtScript.set_border_window_size(gtk.TEXT_WINDOW_RIGHT, 24)
         txtScript.connect("expose-event", self._pintaNumeros,cntScript,txtScript,objetos)
         txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
+        cntScript.set_text(objetos[0].escritos)
         #lado derecho
         lista=gtk.TreeStore(str,str)
         padre=lista.append(None,["Sistema",None])
         f=lista.append(padre,["cicloSistema",gtk.STOCK_DND_MULTIPLE])
         f=lista.append(padre,["cronometroSistema",gtk.STOCK_DND_MULTIPLE])
         for i in range(len(objetos)):
-            padre=lista.append(None,[objetos[i],None])
+            padre=lista.append(None,[objetos[i].nombre,None])
             if i==0:
                 for n in range(len(eventosEscena)):
                     f=lista.append(padre,[eventosEscena[n],gtk.STOCK_DND_MULTIPLE])
@@ -413,7 +414,7 @@ class Ventana:
         lacolumna.pack_start(celda, True)
         lacolumna.add_attribute(celda, "text", 0)
         seleccionFila=listaObjetos.get_selection()
-        listaObjetos.connect("row-activated", self.muestraAtributos,seleccionFila)
+        listaObjetos.connect("row-activated", self.muestraAtributos,seleccionFila,cntScript)
         #lado Izquierdo
 
         #cell = gtk.CellRendererText()
@@ -425,12 +426,15 @@ class Ventana:
         window.add(caja)
         window.show_all()
     
-    def muestraAtributos(self,treeview,itera, path, fila):
+    def muestraAtributos(self,treeview,itera, path, fila,escrito):
         (mod,ite)= fila.get_selected_rows()
         iterador= ite[0]
         if len(iterador)==2:
             self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0]))
-
+            base=escrito.get_text(*escrito.get_bounds())
+            base=base + str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":\n\t\n"
+            escrito.set_text(base)
+    
     def _pintaNumeros(self,window,event,text_buffer,text_view,objetos):
         bounds = text_buffer.get_bounds()
         text = text_buffer.get_text(*bounds)
