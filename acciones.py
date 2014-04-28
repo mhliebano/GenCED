@@ -348,8 +348,7 @@ class Acciones:
     
     def actulizaLienzo(self,tipo=0):
         marca=""
-        pagina="<html><head><title></title><script>function send(msg){document.title = msg;}</script></head>"
-        #a=self.objetos[self.puntero][0].actualizaCadena(self.rutaProyecto)
+        pagina="<html><head><title></title>"+self.objetos[self.puntero][0].javascript+"</head>"
         if tipo==0:
             for i in range(len(self.objetos[self.puntero])):
                 if len(self.nivel)==4 and (self.nivel[3]+1)==i:
@@ -754,7 +753,7 @@ class Acciones:
         if data==13:
             obj=[]
             for i in range(len(self.objetos[self.puntero])):
-                obj.append(self.objetos[self.puntero][i].nombre)
+                obj.append(self.objetos[self.puntero][i])
             self.igu.cuadroDialogoScript(obj)
         self.actualizaArbol()
         self.EDITADO=0
@@ -1161,7 +1160,7 @@ class Acciones:
                 elif len(self.nivel)==4:
                     if self.nivel[1]==0:
                         #print "Eliminar Objeto"+str(self.nivel[3])+" de la Hoja"+str(self.nivel[2])
-                        print "El tipo de objeto a Eliminar es: "+self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
+                        texto= "El tipo de objeto a Eliminar es: "+self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
                         del self.objetos[self.nivel[2]][self.nivel[3]+1]
                         self.actualizaArbol()
                         try:
@@ -1171,13 +1170,24 @@ class Acciones:
                             self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]])
                     if self.nivel[1]==1:
                         recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-                        self.igu.cuadroMensajes("Confirmar Eliminar Objeto","Esta Seguro de Eliminar Este Objeto ("+str(recurso)+")",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
+                        a=self.igu.cuadroMensajes("Confirmar Eliminar Objeto","Esta Seguro de Eliminar Este Objeto ("+str(recurso)+")",gtk.MESSAGE_WARNING,gtk.BUTTONS_YES_NO)
+                        if a==gtk.RESPONSE_YES:
+                            if self.nivel[2]==0:
+                                os.remove(self.proyecto.ruta+"/recursos/imagenes/"+str(recurso))
+                            if self.nivel[2]==1:
+                                os.remove(self.proyecto.ruta+"/recursos/sonidos/"+str(recurso))
+                            if self.nivel[2]==2:
+                                os.remove(self.proyecto.ruta+"/recursos/videos/"+str(recurso))
+                            if self.nivel[2]==3:
+                                os.remove(self.proyecto.ruta+"/recursos/archivos/"+str(recurso))
+                            del self.recursos[self.nivel[2]][self.nivel[3]+1]
+                            self.actualizaArbol()
         self.__elimi=False
         self.igu.barraGua.set_sensitive(True)
         self.igu.barraGuc.set_sensitive(True)
         self.igu.gua.set_sensitive(True)
         self.igu.guc.set_sensitive(True)
-        texto ="Vista Previa de "#+str(modelo[fil][0]) + ", " + str(modelo[fil][1])+"("+str(self.nodo)+")"
+        texto ="Se ha Eliminado "+str(recurso) #+str(modelo[fil][0]) + ", " + str(modelo[fil][1])+"("+str(self.nodo)+")"
         self.igu.statusbar.push(0,texto)
     
     def _cambiaAtributo( self,widget, fila, valor, columna):
