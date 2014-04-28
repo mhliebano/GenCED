@@ -798,25 +798,25 @@ class Acciones:
             if data==0:
                 e=dialog.get_filename().split("/")
                 archivo=e[len(e)-1]
-                destino=self.rutaProyecto+"/recursos/imagenes/"+archivo
+                destino=self.proyecto.ruta+"/recursos/imagenes/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
             elif data==1:
                 e=dialog.get_filename().split("/")
                 archivo=e[len(e)-1]
-                destino=self.rutaProyecto+"/recursos/sonidos/"+archivo
+                destino=self.proyecto.ruta+"/recursos/sonidos/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
             elif data==2:
                 e=dialog.get_filename().split("/")
                 archivo=e[len(e)-1]
-                destino=self.rutaProyecto+"/recursos/videos/"+archivo
+                destino=self.proyecto.ruta+"/recursos/videos/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
             elif data==3:
                 e=dialog.get_filename().split("/")
                 archivo=e[len(e)-1]
-                destino=self.rutaProyecto+"/recursos/archivos/"+archivo
+                destino=self.proyecto.ruta+"/recursos/archivos/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
             self.recursos[data].append(archivo)
