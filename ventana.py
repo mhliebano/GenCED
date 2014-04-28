@@ -4,10 +4,8 @@ import gtk
 import os
 import pango
 import re
-try:
-    ruta=os.path.expanduser("~")+"/app/"
-except Exception:
-    print "Erro de ruta" 
+ruta=os.path.expanduser("~")+"/GenCED/"
+
 class Ventana:
 
     def __init__(self):
