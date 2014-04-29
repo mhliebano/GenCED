@@ -462,10 +462,18 @@ class Ventana:
     def muestraAtributos2(self,treeview,itera, path, fila,escrito):
         (mod,ite)= fila.get_selected_rows()
         iterador= ite[0]
+        base=escrito.get_text(*escrito.get_bounds())
         if len(iterador)==2:
-            self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[1]))
-            base=escrito.get_text(*escrito.get_bounds())
-            base=base + str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":\n"
+            if iterador[0]==0:
+                lineaCodigo= "variable->mivariable=0"
+                base=base +"\t"+lineaCodigo+"\n"
+            elif iterador[0]==1:
+                lineaCodigo= "funcion->lafuncion(arg1,arg2,arg3):"
+                base=base +"\t"+lineaCodigo+"\n"
+            
+            self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[0]))
+            
+            
             escrito.set_text(base)
     
     def _pintaNumeros(self,window,event,text_buffer,text_view,objetos):
