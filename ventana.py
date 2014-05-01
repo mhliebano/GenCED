@@ -386,7 +386,8 @@ class Ventana:
         window.set_modal(True)
         color = gtk.gdk.color_parse('#ffffff')
         window.modify_bg(gtk.STATE_NORMAL, color)
-        caja=gtk.HBox(False)
+        caja=gtk.HBox(True)
+        derecha=gtk.VBox(True)
         txtScript=gtk.TextView()
         cntScript=txtScript.get_buffer()
         txtScript.set_border_window_size(gtk.TEXT_WINDOW_RIGHT, 24)
@@ -394,59 +395,71 @@ class Ventana:
         txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
         cntScript.set_text(objetos[0].escritos)
         #lado derecho
-        lista=gtk.TreeStore(str,str)
-        padre=lista.append(None,["Sistema",None])
-        f=lista.append(padre,["cicloSistema",gtk.STOCK_DND_MULTIPLE])
-        f=lista.append(padre,["cronometroSistema",gtk.STOCK_DND_MULTIPLE])
+        lista=gtk.TreeStore(str,gtk.gdk.Pixbuf)
+        padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
+        f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
+        f=lista.append(padre,["cronometroSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
         for i in range(len(objetos)):
-            padre=lista.append(None,[objetos[i].nombre,None])
             if i==0:
+                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(ruta+'iconos/hoja.png')])
                 for n in range(len(eventosEscena)):
-                    f=lista.append(padre,[eventosEscena[n],gtk.STOCK_DND_MULTIPLE])
+                    f=lista.append(padre,[eventosEscena[n],gtk.gdk.pixbuf_new_from_file(ruta+'iconos/evento.png')])
             else:
+                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(ruta+'iconos/objeto.png')])
                 for n in range(len(eventosObjetos)):
-                    f=lista.append(padre,[eventosObjetos[n],gtk.STOCK_DND_MULTIPLE])
+                    f=lista.append(padre,[eventosObjetos[n],gtk.gdk.pixbuf_new_from_file(ruta+'iconos/evento.png')])
         listaObjetos = gtk.TreeView()
         listaObjetos.set_model(lista)
         lacolumna = gtk.TreeViewColumn("Objetos")
         listaObjetos.append_column(lacolumna)
         celda = gtk.CellRendererText()
-        lacolumna.pack_start(celda, True)
-        lacolumna.add_attribute(celda, "text", 0)
+        icono = gtk.CellRendererPixbuf()
+        lacolumna.pack_start(icono, False)
+        lacolumna.pack_start(celda, False)
+        lacolumna.set_attributes(icono, pixbuf=1)
+        lacolumna.set_attributes(celda, text=0)
         seleccionFila=listaObjetos.get_selection()
         listaObjetos.connect("row-activated", self.muestraAtributos,seleccionFila,cntScript)
         #lado Izquierdo
-        listaIzquierda=gtk.TreeStore(str,str)
+        listaIzquierda=gtk.TreeStore(str,gtk.gdk.Pixbuf)
         padre=listaIzquierda.append(None,["Variables",None])
-        f=listaIzquierda.append(padre,["nueva variable",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["nueva variable",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/variable.png')])
         padre=listaIzquierda.append(None,["Funciones",None])
-        f=listaIzquierda.append(padre,["nueva funcion",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["nueva funcion",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/funcion.png')])
         padre=listaIzquierda.append(None,["Metodos",None])
-        f=listaIzquierda.append(padre,["mostrar",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["ocultar",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["mover",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["redimensionar",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["rotar",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["mensaje",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["confirmacion",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["entrada",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["propiedad",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["mostrar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["ocultar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["mover",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["redimensionar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["rotar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["mensaje",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["confirmacion",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
+        f=listaIzquierda.append(padre,["entrada",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
         padre=listaIzquierda.append(None,["Controles de Flujo",None])
-        f=listaIzquierda.append(padre,["Si",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["Mientras",gtk.STOCK_DND_MULTIPLE])
-        f=listaIzquierda.append(padre,["Desde-Hasta",gtk.STOCK_DND_MULTIPLE])
+        f=listaIzquierda.append(padre,["Si",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/if.png')])
+        f=listaIzquierda.append(padre,["Mientras",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/if.png')])
+        f=listaIzquierda.append(padre,["Desde-Hasta",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/if.png')])
         listaMetodos = gtk.TreeView()
         listaMetodos.set_model(listaIzquierda)
         lacolumna2 = gtk.TreeViewColumn("Metodos")
         listaMetodos.append_column(lacolumna2)
         celda2 = gtk.CellRendererText()
+        icono2 = gtk.CellRendererPixbuf()
+        lacolumna2.pack_start(icono2, False)
         lacolumna2.pack_start(celda2, True)
-        lacolumna2.add_attribute(celda2, "text", 0)
+        lacolumna2.set_attributes(icono2, pixbuf= 1)
+        lacolumna2.set_attributes(celda2, text= 0)
         seleccionFila2=listaMetodos.get_selection()
         listaMetodos.connect("row-activated", self.muestraAtributos2,seleccionFila2,cntScript)
-        
-        caja.pack_start(listaObjetos,False)
+        scroll = gtk.ScrolledWindow()
+        scroll2 = gtk.ScrolledWindow()
+        scroll.add(listaObjetos)
+        derecha.pack_start(scroll,False)
+        scroll2.add(listaMetodos)
+        derecha.pack_start(scroll2,False)
+        caja.pack_start(derecha)
         caja.pack_start(txtScript)
-        caja.pack_start(listaMetodos,False)
         window.add(caja)
         window.show_all()
     
@@ -465,11 +478,11 @@ class Ventana:
         base=escrito.get_text(*escrito.get_bounds())
         if len(iterador)==2:
             if iterador[0]==0:
-                lineaCodigo= "variable->mivariable=0"
-                base=base +"\t"+lineaCodigo+"\n"
+                lineaCodigo= "variable->mivariable=0\n"
+                base=base +lineaCodigo+"\n"
             elif iterador[0]==1:
-                lineaCodigo= "funcion->lafuncion(arg1,arg2,arg3):"
-                base=base +"\t"+lineaCodigo+"\n"
+                lineaCodigo= "funcion->lafuncion(arg1,arg2,arg3):\t\n\t"
+                base=base +lineaCodigo+"\n"
             
             self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[0]))
             
