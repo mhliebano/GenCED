@@ -95,7 +95,6 @@ class Ventana:
         
         #La barra de herramientas
         self.barra = gtk.Toolbar()
-        
         self.barra.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.barra.set_style(gtk.TOOLBAR_ICONS)
         self.barra.set_border_width(5)
@@ -386,15 +385,23 @@ class Ventana:
         window.set_modal(True)
         color = gtk.gdk.color_parse('#ffffff')
         window.modify_bg(gtk.STATE_NORMAL, color)
-        caja=gtk.HBox(True)
-        derecha=gtk.VBox(True)
+        barra = gtk.Toolbar()
+        barra.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        barra.set_style(gtk.TOOLBAR_ICONS)
+        barra.set_border_width(1)
+        barra.set_icon_size(gtk.ICON_SIZE_MENU)
+        icoNue=gtk.Image()
+        icoNue.set_from_file(ruta+'iconos/proyecto.png')
+        barraSCAN = gtk.ToolButton(icoNue)
+        barra.insert(barraSCAN,0)
+        barraSCAN.connect("activate",self.analizador)
+        caja=gtk.VBox(False)
         txtScript=gtk.TextView()
         cntScript=txtScript.get_buffer()
         txtScript.set_border_window_size(gtk.TEXT_WINDOW_RIGHT, 24)
         txtScript.connect("expose-event", self._pintaNumeros,cntScript,txtScript,objetos)
-        txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
+        #txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
         cntScript.set_text(objetos[0].escritos)
-        #lado derecho
         lista=gtk.TreeStore(str,gtk.gdk.Pixbuf)
         padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
         f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
@@ -420,12 +427,12 @@ class Ventana:
         lacolumna.set_attributes(celda, text=0)
         seleccionFila=listaObjetos.get_selection()
         listaObjetos.connect("row-activated", self.muestraAtributos,seleccionFila,cntScript)
-        #lado Izquierdo
         listaIzquierda=gtk.TreeStore(str,gtk.gdk.Pixbuf)
         padre=listaIzquierda.append(None,["Variables",None])
-        f=listaIzquierda.append(padre,["nueva variable",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/variable.png')])
+        f=listaIzquierda.append(padre,["general",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/variable.png')])
+        f=listaIzquierda.append(padre,["local",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/variable.png')])
         padre=listaIzquierda.append(None,["Funciones",None])
-        f=listaIzquierda.append(padre,["nueva funcion",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/funcion.png')])
+        f=listaIzquierda.append(padre,["funcion",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/funcion.png')])
         padre=listaIzquierda.append(None,["Metodos",None])
         f=listaIzquierda.append(padre,["propiedad",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
         f=listaIzquierda.append(padre,["mostrar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
@@ -455,11 +462,15 @@ class Ventana:
         scroll = gtk.ScrolledWindow()
         scroll2 = gtk.ScrolledWindow()
         scroll.add(listaObjetos)
-        derecha.pack_start(scroll,False)
         scroll2.add(listaMetodos)
-        derecha.pack_start(scroll2,False)
-        caja.pack_start(derecha)
-        caja.pack_start(txtScript)
+        caja.pack_start(barra,False)
+        sep=gtk.HSeparator()
+        scrolles=gtk.HBox(False)
+        scrolles.pack_start(scroll,True,True)
+        scrolles.pack_start(scroll2,True,True)
+        caja.pack_start(scrolles,False)
+        caja.pack_start(sep,False)
+        caja.pack_start(txtScript,True)
         window.add(caja)
         window.show_all()
     
@@ -467,9 +478,17 @@ class Ventana:
         (mod,ite)= fila.get_selected_rows()
         iterador= ite[0]
         if len(iterador)==2:
-            self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0]))
+            if mod[ite[0]][0]=="cicloSistema":
+                self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+"(100)")
+                linea=str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+"(100):"
+            elif mod[ite[0]][0]=="cronometroSistema":
+                self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+"(500)")
+                linea=str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+"(500):"
+            else:
+                self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0]))
+                linea=str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"
             base=escrito.get_text(*escrito.get_bounds())
-            base=base + str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":\n\t"
+            base=base + linea+"\n\t\nfin->"+str(mod[ite[0]][0])+"\n"
             escrito.set_text(base)
     
     def muestraAtributos2(self,treeview,itera, path, fila,escrito):
@@ -478,9 +497,12 @@ class Ventana:
         base=escrito.get_text(*escrito.get_bounds())
         if len(iterador)==2:
             if iterador[0]==0:
-                lineaCodigo= "variable->mivariable=0\n"
+                if iterador[1]==0:
+                    lineaCodigo= "varg->mivariable=0\n"
+                if iterador[1]==1:
+                    lineaCodigo= "varl->mivariable=0\n"
             elif iterador[0]==1:
-                lineaCodigo= "funcion->lafuncion(arg1,arg2,arg3):\n"
+                lineaCodigo= "func->lafuncion(arg1,arg2,arg3):\n"
             elif iterador[0]==2:
                 lineaCodigo= "\t"+str(mod[ite[0]][0])+"()\n"
             elif iterador[0]==3:
@@ -503,51 +525,50 @@ class Ventana:
         window.clear()
         text_view.style.paint_layout(window=window,state_type=gtk.STATE_NORMAL,use_text=True,area=None,widget=text_view,detail=None,x=2,y=y,layout=layout)
     
-    def analizador(self,widget,event,data=None,objetos=None):
-        if gtk.gdk.keyval_to_upper(event.keyval)==65293:
-            eventos=["alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
-            ini,fin=data.get_bounds()
-            lineas=data.get_line_count()+2
-            #tag=data.create_tag("error",foreground="#FF0000")
-            data.remove_all_tags(ini,fin)
-            tagVar=data.create_tag(None,foreground="#0000FF")
-            tagFun=data.create_tag(None,foreground="#0A6526")
-            tagEve=data.create_tag(None,foreground="#FFA500")
-            tagErr=data.create_tag(None,foreground="#FF0000")
+    def analizador(self,widget,data=None,objetos=None):
+        eventos=["alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
+        ini,fin=data.get_bounds()
+        lineas=data.get_line_count()+1
+        #tag=data.create_tag("error",foreground="#FF0000")
+        """data.remove_all_tags(ini,fin)
+        tagVar=data.create_tag(None,foreground="#0000FF")
+        tagFun=data.create_tag(None,foreground="#0A6526")
+        tagEve=data.create_tag(None,foreground="#FFA500")
+        tagErr=data.create_tag(None,foreground="#FF0000")
+        error="Todo fino!!!! OK"
+    
+        for i in range(lineas-1):
+            p1=data.get_iter_at_line(i)
+            p2=data.get_iter_at_line_offset(i,p1.get_chars_in_line()-1)
+            linea = data.get_text(p1,p2)
             error="Todo fino!!!! OK"
-        
-            for i in range(lineas-1):
-                p1=data.get_iter_at_line(i)
-                p2=data.get_iter_at_line_offset(i,p1.get_chars_in_line()-1)
-                linea = data.get_text(p1,p2)
-                error="Todo fino!!!! OK"
-                if re.search("^\t",linea):
-                    print "elemento de funcion"
-                else:
-                    if re.search("^var\s",linea):
-                        print "una variable"
-                        data.apply_tag(tagVar,p1,p2)
-                    elif re.search("^funcion\s",linea):
-                        print "una funcion"
-                        data.apply_tag(tagFun,p1,p2)
-                    elif re.search("^al+[A,C,P,F,S]{1}.*_Hoja\d{1,2}$",linea):
-                        if linea.split("_")[0] in eventos:
-                            if linea.split("_")[1] in objetos:
-                                data.apply_tag(tagEve,p1,p2)
-                                continue
-                            else:
-                                data.apply_tag(tagErr,p1,p2)
-                                error="Error de Sintaxis en la linea "+str(i+1)+" Esta Escena No existe"
-                                break
+            if re.search("^\t",linea):
+                print "elemento de funcion"
+            else:
+                if re.search("^var\s",linea):
+                    print "una variable"
+                    data.apply_tag(tagVar,p1,p2)
+                elif re.search("^funcion\s",linea):
+                    print "una funcion"
+                    data.apply_tag(tagFun,p1,p2)
+                elif re.search("^al+[A,C,P,F,S]{1}.*_Hoja\d{1,2}$",linea):
+                    if linea.split("_")[0] in eventos:
+                        if linea.split("_")[1] in objetos:
+                            data.apply_tag(tagEve,p1,p2)
+                            continue
                         else:
                             data.apply_tag(tagErr,p1,p2)
-                            error="Error Lexico en la linea"+str(i+1)+" La escena no posee el evento"
+                            error="Error de Sintaxis en la linea "+str(i+1)+" Esta Escena No existe"
                             break
-                    else:
+                        els:
                         data.apply_tag(tagErr,p1,p2)
-                        error= "Error de sintaxis no se reconoce lo escrito en la linea "+str(i+1)
+                        error="Error Lexico en la linea"+str(i+1)+" La escena no posee el evento"
                         break
-            self.statusbar.push(0,str(error))
+                    els:
+                    data.apply_tag(tagErr,p1,p2)
+                    error= "Error de sintaxis no se reconoce lo escrito en la linea "+str(i+1)
+                    break"""
+        self.statusbar.push(0,str(lineas))
 
     def salir(self,widget,data=None):
         respuesta =self.cuadroMensajes("Confirmación de Salida","¿Está Seguro de Querer Salir del Programa?\nAsegurese de haber guardado los cambios en el proyecto",gtk.MESSAGE_INFO,gtk.BUTTONS_YES_NO)
