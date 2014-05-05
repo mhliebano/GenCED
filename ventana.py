@@ -394,14 +394,14 @@ class Ventana:
         icoNue.set_from_file(ruta+'iconos/proyecto.png')
         barraSCAN = gtk.ToolButton(icoNue)
         barra.insert(barraSCAN,0)
-        barraSCAN.connect("activate",self.analizador)
         caja=gtk.VBox(False)
         txtScript=gtk.TextView()
         cntScript=txtScript.get_buffer()
         txtScript.set_border_window_size(gtk.TEXT_WINDOW_RIGHT, 24)
-        txtScript.connect("expose-event", self._pintaNumeros,cntScript,txtScript,objetos)
+        txtScript.connect("expose-event", self._pintaNumeros,cntScript,txtScript)
         #txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
         cntScript.set_text(objetos[0].escritos)
+        barraSCAN.connect("clicked",self.analizador,cntScript)
         lista=gtk.TreeStore(str,gtk.gdk.Pixbuf)
         padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
         f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
@@ -468,8 +468,8 @@ class Ventana:
         scrolles=gtk.HBox(False)
         scrolles.pack_start(scroll,True,True)
         scrolles.pack_start(scroll2,True,True)
-        caja.pack_start(scrolles,False)
-        caja.pack_start(sep,False)
+        caja.pack_start(scrolles,False,False,0)
+        caja.pack_start(sep,False,True)
         caja.pack_start(txtScript,True)
         window.add(caja)
         window.show_all()
@@ -511,7 +511,7 @@ class Ventana:
             self.statusbar.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[0]))
             escrito.set_text(base)
     
-    def _pintaNumeros(self,window,event,text_buffer,text_view,objetos):
+    def _pintaNumeros(self,window,event,text_buffer,text_view):
         bounds = text_buffer.get_bounds()
         text = text_buffer.get_text(*bounds)
         nlines = text_buffer.get_line_count()
@@ -526,9 +526,26 @@ class Ventana:
         text_view.style.paint_layout(window=window,state_type=gtk.STATE_NORMAL,use_text=True,area=None,widget=text_view,detail=None,x=2,y=y,layout=layout)
     
     def analizador(self,widget,data=None,objetos=None):
-        eventos=["alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
+        eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
+        variablesValiadas=["varg","varl"]
         ini,fin=data.get_bounds()
         lineas=data.get_line_count()+1
+        #variables de control (banderas)
+        inicioLinea=True
+        declaracionVariables=True
+        for i in range(lineas-1):
+            p1=data.get_iter_at_line(i)
+            ncr=p1.get_chars_in_line()-1
+            if ncr>0:#esto es para evitar el molestoso aborto de gtk cuando las linea esta vacia
+                p2=data.get_iter_at_line_offset(i,ncr)
+                linea = data.get_text(p1,p2)
+                if inicioLinea:
+                    token=linea.split("->")[0]
+                    
+            else:
+                linea=""
+            print linea
+            
         #tag=data.create_tag("error",foreground="#FF0000")
         """data.remove_all_tags(ini,fin)
         tagVar=data.create_tag(None,foreground="#0000FF")
@@ -536,11 +553,7 @@ class Ventana:
         tagEve=data.create_tag(None,foreground="#FFA500")
         tagErr=data.create_tag(None,foreground="#FF0000")
         error="Todo fino!!!! OK"
-    
-        for i in range(lineas-1):
-            p1=data.get_iter_at_line(i)
-            p2=data.get_iter_at_line_offset(i,p1.get_chars_in_line()-1)
-            linea = data.get_text(p1,p2)
+            
             error="Todo fino!!!! OK"
             if re.search("^\t",linea):
                 print "elemento de funcion"
