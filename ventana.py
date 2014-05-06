@@ -527,7 +527,8 @@ class Ventana:
     
     def analizador(self,widget,data=None,objetos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
-        variablesValiadas=["varg","varl"]
+        variablesValidas=["varg","varl"]
+        variablesDeclaradas=[]
         ini,fin=data.get_bounds()
         lineas=data.get_line_count()+1
         #variables de control (banderas)
@@ -539,12 +540,36 @@ class Ventana:
             if ncr>0:#esto es para evitar el molestoso aborto de gtk cuando las linea esta vacia
                 p2=data.get_iter_at_line_offset(i,ncr)
                 linea = data.get_text(p1,p2)
+                print "evaluando "+linea
                 if inicioLinea:
                     token=linea.split("->")[0]
-                    
+                    nombre=linea.split("->")[1]
+                    if token in variablesValidas:
+                        if declaracionVariables:
+                            if nombre in variablesDeclaradas:
+                                print "Esta Variable ya fue declarada"
+                            else:
+                                variablesDeclaradas.append(nombre)
+                        else:
+                            print "No se puede declarar variables en este contexto"
+                    elif token in eventosValidos:
+                        declaracionVariables=False
+                        inicioLinea=False
+                    elif token=="func":
+                        pass
+                    else:
+                        print "Inicio de linea no reconocido"
+                else:
+                    if re.search("^\t",linea):
+                        print "elemento de funcion"
+                    else:
+                        if linea.split("->")[0]=="fin":
+                            inicioLinea=True
+                        else:
+                            print "debe cerrar el evento"
             else:
                 linea=""
-            print linea
+            print i
             
         #tag=data.create_tag("error",foreground="#FF0000")
         """data.remove_all_tags(ini,fin)
