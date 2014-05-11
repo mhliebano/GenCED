@@ -543,25 +543,57 @@ class Ventana:
             if ncr>0:#esto es para evitar el molestoso aborto de gtk cuando las linea esta vacia
                 p2=data.get_iter_at_line_offset(i,ncr)
                 linea = data.get_text(p1,p2)
-                print "evaluando "+linea
+                print "linea "+str(i+1)+": "+linea
                 if inicioLinea:
-                    token=linea.split("->")[0]
-                    nombre=linea.split("->")[1]
-                    if token in variablesValidas:
-                        if declaracionVariables:
-                            if nombre in variablesDeclaradas:
-                                print "Esta Variable ya fue declarada"
-                            else:
-                                variablesDeclaradas.append(nombre)
-                        else:
-                            print "No se puede declarar variables en este contexto"
-                    elif token in eventosValidos:
-                        declaracionVariables=False
-                        inicioLinea=False
-                    elif token=="func":
-                        pass
+                    if re.search("^\t",linea):
+                        print "Un inicio de Linea no Admite 'tab' al inicio"
+                        break
                     else:
-                        print "Inicio de linea no reconocido"
+                        if re.search("->",linea):
+                            token=linea.split("->")[0]
+                            nombre=linea.split("->")[1]
+                            if token in variablesValidas:
+                                if re.search("=",nombre):
+                                    variable=nombre.split("=")[0]
+                                    asignacion=nombre.split("=")[1]
+                                    if re.search("^[a-z]*$",variable):
+                                        if declaracionVariables:
+                                            if nombre in variablesDeclaradas:
+                                                print "Esta Variable ya fue declarada"
+                                                break
+                                            else:
+                                                variablesDeclaradas.append(nombre)
+                                                if asignacion=="":
+                                                    print "La asignacion no puede estar vacia"
+                                                    break
+                                                elif re.search("^[0-9]*.[0-9]*$",asignacion):
+                                                    print "posible numero"
+                                                elif re.search("^\"*.*\"$",asignacion):
+                                                    print "posible cadena"
+                                                else:
+                                                    print "Asignacion Incorrecta"
+                                                    break
+                                        else:
+                                            print "No se puede declarar variables en este contexto"
+                                            break
+                                    else:
+                                        print "la variable solo debe contener letras minusculas"
+                                        break
+                                    
+                                else:
+                                    print "la variable debe ser asignada ('=')"
+                                    break
+                            elif token in eventosValidos:
+                                declaracionVariables=False
+                                inicioLinea=False
+                            elif token=="func":
+                                pass
+                            else:
+                                print "Inicio de linea no reconocido"
+                                break
+                        else:
+                            print "falta apuntador '->' en el Inicio de Linea"
+                            break
                 else:
                     if re.search("^\t",linea):
                         print "elemento de funcion"
@@ -572,8 +604,8 @@ class Ventana:
                             print "debe cerrar el evento"
             else:
                 linea=""
-            print i
-            
+                continue
+            print "Ok"
         #tag=data.create_tag("error",foreground="#FF0000")
         """data.remove_all_tags(ini,fin)
         tagVar=data.create_tag(None,foreground="#0000FF")
