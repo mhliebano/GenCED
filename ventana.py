@@ -374,7 +374,7 @@ class Ventana:
         dialogo.destroy()
         return (response,archivo)
 
-    def cuadroDialogoScript(self,objetos):
+    def cuadroDialogoScript(self,objetos):        
         eventosEscena=["alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
         window=gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -401,7 +401,7 @@ class Ventana:
         txtScript.connect("expose-event", self._pintaNumeros,cntScript,txtScript)
         #txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
         cntScript.set_text(objetos[0].escritos)
-        barraSCAN.connect("clicked",self.analizador,cntScript)
+        barraSCAN.connect("clicked",self.analizador,cntScript,objetos)
         lista=gtk.TreeStore(str,gtk.gdk.Pixbuf)
         padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
         f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
@@ -530,8 +530,10 @@ class Ventana:
     
     def analizador(self,widget,data=None,objetos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
+        eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
         variablesValidas=["varg","varl"]
         variablesDeclaradas=[]
+        obje=objetos
         ini,fin=data.get_bounds()
         lineas=data.get_line_count()+1
         #variables de control (banderas)
@@ -544,6 +546,7 @@ class Ventana:
                 p2=data.get_iter_at_line_offset(i,ncr)
                 linea = data.get_text(p1,p2)
                 print "linea "+str(i+1)+": "+linea
+                #inicioLinea=true
                 if inicioLinea:
                     if re.search("^\t",linea):
                         print "Un inicio de Linea no Admite 'tab' al inicio"
@@ -552,48 +555,73 @@ class Ventana:
                         if re.search("->",linea):
                             token=linea.split("->")[0]
                             nombre=linea.split("->")[1]
+                            #es una variable?
                             if token in variablesValidas:
+                                #esta asignada?
                                 if re.search("=",nombre):
                                     variable=nombre.split("=")[0]
                                     asignacion=nombre.split("=")[1]
+                                    #contiene solo letras minusculas?
                                     if re.search("^[a-z]*$",variable):
+                                        #Puedo declarar variables aqui?
                                         if declaracionVariables:
+                                            #Ya fue declarada?
                                             if nombre in variablesDeclaradas:
                                                 print "Esta Variable ya fue declarada"
                                                 break
+                                            #No ha sido declarada
                                             else:
                                                 variablesDeclaradas.append(nombre)
+                                                #esta vacia la asignacion
                                                 if asignacion=="":
                                                     print "La asignacion no puede estar vacia"
                                                     break
+                                                #es una variable numerica?
                                                 elif re.search("^[0-9]*.[0-9]*$",asignacion):
                                                     print "posible numero"
+                                                #es una variable de texto
                                                 elif re.search("^\"*.*\"$",asignacion):
                                                     print "posible cadena"
+                                                #ninguna de las anteriores
                                                 else:
                                                     print "Asignacion Incorrecta"
                                                     break
+                                        #estoy fuera de la declaracion de variables
                                         else:
                                             print "No se puede declarar variables en este contexto"
                                             break
+                                    #no tiene solo letras minusculas
                                     else:
                                         print "la variable solo debe contener letras minusculas"
                                         break
-                                    
+                                #No esta asignada
                                 else:
                                     print "la variable debe ser asignada ('=')"
                                     break
+                            #es un evento de Hoja o de sistema?
                             elif token in eventosValidos:
                                 declaracionVariables=False
                                 inicioLinea=False
+                            #es un evento de Objeto?
+                            elif token in eventosObjetos:
+                                declaracionVariables=False
+                                inicioLinea=False
+                                if nombre in obje:
+                                    print "ok"
+                                else:
+                                    print "Objeto NO reconocido"
+                                    break
+                            #es una funcion?
                             elif token=="func":
                                 pass
+                            #ninguna de las anteriores?
                             else:
                                 print "Inicio de linea no reconocido"
                                 break
                         else:
                             print "falta apuntador '->' en el Inicio de Linea"
                             break
+                #inicioLinea false
                 else:
                     if re.search("^\t",linea):
                         print "elemento de funcion"
