@@ -103,60 +103,60 @@ class Ventana:
         #Botones estandar
         #icono=gtk.image_new_from_pixbuf(gtk.gdk.pixbuf_new_from_file_at_size('iconos/proyecto.png', 25, 25))
         icoNue=gtk.Image()
-        icoNue.set_from_file(ruta+'iconos/proyecto.png')
+        icoNue.set_from_file(os.path.join(ruta,'iconos/proyecto.png'))
         self.barraNue = gtk.ToolButton(icoNue)
         self.barraNue.set_tooltip(tooltips,"Nuevo Proyecto")
 
         icoAbr=gtk.Image()
-        icoAbr.set_from_file(ruta+'iconos/abrir.png')
+        icoAbr.set_from_file(os.path.join(ruta,'iconos/abrir.png'))
         self.barraAbr = gtk.ToolButton(icoAbr)
         self.barraAbr.set_tooltip(tooltips,"Abrir Proyecto")
         
         icoGua=gtk.Image()
-        icoGua.set_from_file(ruta+'iconos/guardar.png')
+        icoGua.set_from_file(os.path.join(ruta,'iconos/guardar.png'))
         self.barraGua = gtk.ToolButton(icoGua)
         self.barraGua.set_tooltip(tooltips,"Guardar Proyecto")
         self.barraGua.set_sensitive(False)
         
         icoGuc=gtk.Image()
-        icoGuc.set_from_file(ruta+'iconos/guardarc.png')
+        icoGuc.set_from_file(os.path.join(ruta,'iconos/guardarc.png'))
         self.barraGuc = gtk.ToolButton(icoGuc)
         self.barraGuc.set_tooltip(tooltips,"Guardar Proyecto Como")
         self.barraGuc.set_sensitive(False)
         
         self.sep = gtk.SeparatorToolItem()
         icoSal=gtk.Image()
-        icoSal.set_from_file(ruta+'iconos/salir.png')
+        icoSal.set_from_file(os.path.join(ruta,'iconos/salir.png'))
         self.quittb = gtk.ToolButton(icoSal)
         
         #botones de recursos
         self.sep2 = gtk.SeparatorToolItem()
         icoHoj=gtk.Image()
-        icoHoj.set_from_file(ruta+'iconos/hoja.png')
+        icoHoj.set_from_file(os.path.join(ruta,'iconos/hoja.png'))
         self.barraHojaNueva=gtk.ToolButton(icoHoj)
         self.barraHojaNueva.set_tooltip(tooltips,"Insertar Nueva Hoja")
         self.barraHojaNueva.set_sensitive(False)
         
         icoImg=gtk.Image()
-        icoImg.set_from_file(ruta+'iconos/imagen.png')
+        icoImg.set_from_file(os.path.join(ruta,'iconos/imagen.png'))
         self.barraImagenNuevo=gtk.ToolButton(icoImg)
         self.barraImagenNuevo.set_tooltip(tooltips,"Insertar Nueva Imagen")
         self.barraImagenNuevo.set_sensitive(False)
         
         icoSon=gtk.Image()
-        icoSon.set_from_file(ruta+'iconos/sonido.png')
+        icoSon.set_from_file(os.path.join(ruta,'iconos/sonido.png'))
         self.barraSonidoNuevo=gtk.ToolButton(icoSon)
         self.barraSonidoNuevo.set_tooltip(tooltips,"Insertar Nuevo Sonido")
         self.barraSonidoNuevo.set_sensitive(False)
         
         icoVid=gtk.Image()
-        icoVid.set_from_file(ruta+'iconos/video.png')
+        icoVid.set_from_file(os.path.join(ruta,'iconos/video.png'))
         self.barraVideoNuevo=gtk.ToolButton(icoVid)
         self.barraVideoNuevo.set_tooltip(tooltips,"Insertar Nuevo Video")
         self.barraVideoNuevo.set_sensitive(False)
         
         icoArc=gtk.Image()
-        icoArc.set_from_file(ruta+'iconos/archivo.png')
+        icoArc.set_from_file(os.path.join(ruta,'iconos/archivo.png'))
         self.barraArchivoNuevo=gtk.ToolButton(icoArc)
         self.barraArchivoNuevo.set_tooltip(tooltips,"Insertar Nuevo Archivo")
         self.barraArchivoNuevo.set_sensitive(False)
@@ -164,37 +164,37 @@ class Ventana:
         self.sep3 = gtk.SeparatorToolItem()
         
         icoRec=gtk.Image()
-        icoRec.set_from_file(ruta+'iconos/cuadrado.png')
+        icoRec.set_from_file(os.path.join(ruta,'iconos/cuadrado.png'))
         self.barraRectangulo=gtk.ToolButton(icoRec)
         self.barraRectangulo.set_tooltip(tooltips,"Insertar rectangulo");
         self.barraRectangulo.set_sensitive(False)
         
         icoCir=gtk.Image()
-        icoCir.set_from_file(ruta+'iconos/circulo.png')
+        icoCir.set_from_file(os.path.join(ruta,'iconos/circulo.png'))
         self.barraCirculo=gtk.ToolButton(icoCir)
         self.barraCirculo.set_tooltip(tooltips,"Insertar circulo");
         self.barraCirculo.set_sensitive(False)
         
         icoTri=gtk.Image()
-        icoTri.set_from_file(ruta+'iconos/triangulo.png')
+        icoTri.set_from_file(os.path.join(ruta,'iconos/triangulo.png'))
         self.barraTriangulo=gtk.ToolButton(icoTri)
         self.barraTriangulo.set_tooltip(tooltips,"Insertar triangulo");
         self.barraTriangulo.set_sensitive(False)
 
         icoLin=gtk.Image()
-        icoLin.set_from_file(ruta+'iconos/linea.png')
+        icoLin.set_from_file(os.path.join(ruta,'iconos/linea.png'))
         self.barraLinea=gtk.ToolButton(icoLin)
         self.barraLinea.set_tooltip(tooltips,"Insertar Linea");
         self.barraLinea.set_sensitive(False)
         
         icoimg=gtk.Image()
-        icoimg.set_from_file(ruta+'iconos/imagen.png')
+        icoimg.set_from_file(os.path.join(ruta,'iconos/imagen.png'))
         self.barraImagen=gtk.ToolButton(icoimg)
         self.barraImagen.set_tooltip(tooltips,"Insertar Imagen a la Hoja");
         self.barraImagen.set_sensitive(False)
         
         icotex=gtk.Image()
-        icotex.set_from_file(ruta+'iconos/texto.png')
+        icotex.set_from_file(os.path.join(ruta,'iconos/texto.png'))
         self.barraTexto=gtk.ToolButton(icotex)
         self.barraTexto.set_tooltip(tooltips,"Insertar texto");
         self.barraTexto.set_sensitive(False)
@@ -203,49 +203,49 @@ class Ventana:
         self.sep4 = gtk.SeparatorToolItem()
         
         icoBot=gtk.Image()
-        icoBot.set_from_file(ruta+'iconos/boton.png')
+        icoBot.set_from_file(os.path.join(ruta,'iconos/boton.png'))
         self.barraBoton=gtk.ToolButton(icoBot)
         self.barraBoton.set_tooltip(tooltips,"Insertar Boton");
         self.barraBoton.set_sensitive(False)
         
         icoTex=gtk.Image()
-        icoTex.set_from_file(ruta+'iconos/cajaTexto.png')
+        icoTex.set_from_file(os.path.join(ruta,'iconos/cajaTexto.png'))
         self.barraCajaTexto=gtk.ToolButton(icoTex)
         self.barraCajaTexto.set_tooltip(tooltips,"Insertar caja de texto");
         self.barraCajaTexto.set_sensitive(False)
         
         icoLis=gtk.Image()
-        icoLis.set_from_file(ruta+'iconos/lista.png')
+        icoLis.set_from_file(os.path.join(ruta,'iconos/lista.png'))
         self.barraLista=gtk.ToolButton(icoLis)
         self.barraLista.set_tooltip(tooltips,"Insertar Lista Desplegable");
         self.barraLista.set_sensitive(False)
         
         icoChk=gtk.Image()
-        icoChk.set_from_file(ruta+'iconos/check.png')
+        icoChk.set_from_file(os.path.join(ruta,'iconos/check.png'))
         self.barraCheck=gtk.ToolButton(icoChk)
         self.barraCheck.set_tooltip(tooltips,"Insertar CheckBox");
         self.barraCheck.set_sensitive(False)
         
         icoArea=gtk.Image()
-        icoArea.set_from_file(ruta+'iconos/editor.png')
+        icoArea.set_from_file(os.path.join(ruta,'iconos/editor.png'))
         self.barraArea=gtk.ToolButton(icoArea)
         self.barraArea.set_tooltip(tooltips,"Insertar Editor de Texto");
         self.barraArea.set_sensitive(False)
         
         icoSnd=gtk.Image()
-        icoSnd.set_from_file(ruta+'iconos/corneta.png')
+        icoSnd.set_from_file(os.path.join(ruta,'iconos/corneta.png'))
         self.barraSon=gtk.ToolButton(icoSnd)
         self.barraSon.set_tooltip(tooltips,"Insertar Sonido a la Hoja");
         self.barraSon.set_sensitive(False)
         
         icoCla=gtk.Image()
-        icoCla.set_from_file(ruta+'iconos/clap.png')
+        icoCla.set_from_file(os.path.join(ruta,'iconos/clap.png'))
         self.barraCla=gtk.ToolButton(icoCla)
         self.barraCla.set_tooltip(tooltips,"Insertar Video a la Hoja");
         self.barraCla.set_sensitive(False)
         
         icoScr=gtk.Image()
-        icoScr.set_from_file(ruta+'iconos/escritos.png')
+        icoScr.set_from_file(os.path.join(ruta,'iconos/escritos.png'))
         self.barraScr=gtk.ToolButton(icoScr)
         self.barraScr.set_tooltip(tooltips,"Insertar Codigo Escrito a la Hoja");
         self.barraScr.set_sensitive(False)
@@ -391,7 +391,7 @@ class Ventana:
         barra.set_border_width(1)
         barra.set_icon_size(gtk.ICON_SIZE_MENU)
         icoNue=gtk.Image()
-        icoNue.set_from_file(ruta+'iconos/proyecto.png')
+        icoNue.set_from_file(os.path.join(ruta,'iconos/proyecto.png'))
         barraSCAN = gtk.ToolButton(icoNue)
         barra.insert(barraSCAN,0)
         caja=gtk.VBox(False)
@@ -403,18 +403,18 @@ class Ventana:
         cntScript.set_text(objetos[0].escritos)
         barraSCAN.connect("clicked",self.analizador,cntScript,objetos)
         lista=gtk.TreeStore(str,gtk.gdk.Pixbuf)
-        padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
-        f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
-        f=lista.append(padre,["cronometroSistema",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/ciclo.png')])
+        padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png')]))
+        f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/ciclo.png')]))
+        f=lista.append(padre,["cronometroSistema",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/ciclo.png')]))
         for i in range(len(objetos)):
             if i==0:
-                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(ruta+'iconos/hoja.png')])
+                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/hoja.png')]))
                 for n in range(len(eventosEscena)):
-                    f=lista.append(padre,[eventosEscena[n],gtk.gdk.pixbuf_new_from_file(ruta+'iconos/evento.png')])
+                    f=lista.append(padre,[eventosEscena[n],gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/evento.png')]))
             else:
-                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(ruta+'iconos/objeto.png')])
+                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/objeto.png')]))
                 for n in range(len(eventosObjetos)):
-                    f=lista.append(padre,[eventosObjetos[n],gtk.gdk.pixbuf_new_from_file(ruta+'iconos/evento.png')])
+                    f=lista.append(padre,[eventosObjetos[n],gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/evento.png')]))
         listaObjetos = gtk.TreeView()
         listaObjetos.set_model(lista)
         lacolumna = gtk.TreeViewColumn("Objetos")
@@ -428,25 +428,25 @@ class Ventana:
         seleccionFila=listaObjetos.get_selection()
         listaObjetos.connect("row-activated", self.muestraAtributos,seleccionFila,cntScript)
         listaIzquierda=gtk.TreeStore(str,gtk.gdk.Pixbuf)
-        padre=listaIzquierda.append(None,["Variables",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
-        f=listaIzquierda.append(padre,["general",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/variable.png')])
-        f=listaIzquierda.append(padre,["local",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/variable.png')])
-        padre=listaIzquierda.append(None,["Funciones",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
-        f=listaIzquierda.append(padre,["funcion",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/funcion.png')])
-        padre=listaIzquierda.append(None,["Metodos",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
-        f=listaIzquierda.append(padre,["propiedad",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["mostrar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["ocultar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["mover",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["redimensionar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["rotar",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["mensaje",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["confirmacion",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        f=listaIzquierda.append(padre,["entrada",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/metodo.png')])
-        padre=listaIzquierda.append(None,["Controles de Flujo",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/sistema.png')])
-        f=listaIzquierda.append(padre,["Si",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/if.png')])
-        f=listaIzquierda.append(padre,["Mientras",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/if.png')])
-        f=listaIzquierda.append(padre,["Desde-Hasta",gtk.gdk.pixbuf_new_from_file(ruta+'iconos/if.png')])
+        padre=listaIzquierda.append(None,["Variables",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png')]))
+        f=listaIzquierda.append(padre,["general",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/variable.png')]))
+        f=listaIzquierda.append(padre,["local",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/variable.png')]))
+        padre=listaIzquierda.append(None,["Funciones",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png')]))
+        f=listaIzquierda.append(padre,["funcion",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/funcion.png')]))
+        padre=listaIzquierda.append(None,["Metodos",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png')]))
+        f=listaIzquierda.append(padre,["propiedad",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["mostrar",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["ocultar",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["mover",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["redimensionar",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["rotar",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["mensaje",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["confirmacion",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        f=listaIzquierda.append(padre,["entrada",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png')]))
+        padre=listaIzquierda.append(None,["Controles de Flujo",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png')]))
+        f=listaIzquierda.append(padre,["Si",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/if.png')]))
+        f=listaIzquierda.append(padre,["Mientras",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/if.png')]))
+        f=listaIzquierda.append(padre,["Desde-Hasta",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/if.png')]))
         listaMetodos = gtk.TreeView()
         listaMetodos.set_model(listaIzquierda)
         lacolumna2 = gtk.TreeViewColumn("Metodos")
