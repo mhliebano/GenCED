@@ -4,7 +4,7 @@ import gtk
 import os
 import pango
 import re
-ruta=os.path.expanduser("~")+"/GenCED/"
+ruta= os.path.dirname(os.path.realpath(__file__))
 
 class Ventana:
 
@@ -15,7 +15,7 @@ class Ventana:
         self.window.set_title("Generador de CED")
         self.window.maximize()
         self.window.set_resizable(False)
-        self.window.set_icon_from_file(ruta+'iconos/iconoApp.png')
+        self.window.set_icon_from_file(os.path.join(ruta,'iconos/iconoApp.png'))
         color = gtk.gdk.color_parse('#ffffff')
         self.window.modify_bg(gtk.STATE_NORMAL, color)
         self.window.connect("delete_event",self.salir) 
