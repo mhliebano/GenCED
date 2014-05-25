@@ -602,18 +602,109 @@ class Ventana:
                             elif token in eventosValidos:
                                 declaracionVariables=False
                                 inicioLinea=False
+                                #es el nombre Sistema?
+                                if re.search("^Sistema",nombre):
+                                    #termina en :?
+                                    if nombre[-1]==":":
+                                        #Se abrio (?:
+                                        if nombre[7]=="(":
+                                            #se cerro el )?
+                                            if nombre[-2]==")":
+                                                #el argumento es un numero entero?
+                                                if nombre[8:-2].isdigit():
+                                                    #es mayor de 100?
+                                                    if int(nombre[8:-2])>99:
+                                                        #Que tipo evento de sistema es?
+                                                        if token==eventosValidos[0]:
+                                                            print "Ok evento de sistema tipo cronometro"
+                                                        else:
+                                                            #Ya hay un ciclo de sistema?
+                                                            if "ciclo" in variablesDeclaradas:
+                                                                print "ya existe un ciclo de sistema"
+                                                                break
+                                                            else:
+                                                                variablesDeclaradas.append("ciclo")
+                                                                print "Ok evento de sistema tipo ciclo"
+                                                    else:
+                                                        print "El argumento debe ser un numero entero mayor de 99"
+                                                        break
+                                                else:
+                                                    print "El argumento debe ser un numero entero"
+                                                    break
+                                            else:
+                                                print "Debe cerrar el argumento con )"
+                                                break
+                                        else:
+                                            print "Debe abrir el argumento con ("
+                                            break
+                                    else:
+                                        print "La linea debe terminar con :"
+                                        break
+                                #Es el nombre Hoja?
+                                elif re.search("^Hoja",nombre):
+                                    #Es la hoja correcta?
+                                    if nombre[0:len(nombre)-1]==str(obje[0].nombre):
+                                        #Termina la linea con :
+                                        if nombre[-1]==":":
+                                            #Ya se ha declarado el evento de hoja?
+                                            if token in variablesDeclaradas:
+                                                print "ya se declaro este evento de hoja"
+                                                break
+                                            else:
+                                                variablesDeclaradas.append(token)
+                                                print "Ok es un evento de hoja correcto"
+                                        else:
+                                            print "Debe terminar la linea con :"
+                                            break
+                                    else:
+                                        print "Nombre de hoja no reconocido"
+                                else:
+                                    print "No se reconoce este objeto"
+                                    break
                             #es un evento de Objeto?
                             elif token in eventosObjetos:
                                 declaracionVariables=False
                                 inicioLinea=False
-                                if nombre in obje:
-                                    print "ok"
+                                nm=False
+                                #el objeto existe realmente?
+                                for i in range(len(obje)-1):
+                                    if nombre[0:-1] == obje[i].nombre:
+                                        nm=True
+                                        break
+                                if nm==True:
+                                    #termina la linea con :?
+                                    if nombre[-1] == ":":
+                                        #Tiene algun caracter extraño?
+                                        print nombre[0:-1]
+                                        if re.search("^[a-zA-Z0-9]*$",nombre[0:-1]):
+                                            #termina con un numero?
+                                            if re.search("[0-9]$",nombre[0:-1]):
+                                                #empieza con una letra Mayuscula?
+                                                if re.search("^[A-Z]",nombre[0:-1]):
+                                                    #el resto es minusculas?
+                                                    if re.search("^[A-Z].[^A-Z]",nombre[0:-1]):
+                                                        print "Ok el objeto es correcto"
+                                                    else:
+                                                        print "Solo la primera letra debe ser mayuscula"
+                                                        break
+                                                else:
+                                                    print "Debe Iniciar el nombre de objeto con una letra mayuscula"
+                                                    break
+                                            else:
+                                                print "Debe terminar el nombre de objeto en un numero"
+                                                break
+                                        else:
+                                            print "No se admiten caracteres especiales"
+                                            break
+                                    else:
+                                        print "Debe terminar la linea con :"
+                                        break
                                 else:
                                     print "Objeto NO reconocido"
                                     break
                             #es una funcion?
                             elif token=="func":
-                                pass
+                                print "Posblimente una funcion"
                             #ninguna de las anteriores?
                             else:
                                 print "Inicio de linea no reconocido"
@@ -634,41 +725,6 @@ class Ventana:
                 linea=""
                 continue
             print "Ok"
-        #tag=data.create_tag("error",foreground="#FF0000")
-        """data.remove_all_tags(ini,fin)
-        tagVar=data.create_tag(None,foreground="#0000FF")
-        tagFun=data.create_tag(None,foreground="#0A6526")
-        tagEve=data.create_tag(None,foreground="#FFA500")
-        tagErr=data.create_tag(None,foreground="#FF0000")
-        error="Todo fino!!!! OK"
-            
-            error="Todo fino!!!! OK"
-            if re.search("^\t",linea):
-                print "elemento de funcion"
-            else:
-                if re.search("^var\s",linea):
-                    print "una variable"
-                    data.apply_tag(tagVar,p1,p2)
-                elif re.search("^funcion\s",linea):
-                    print "una funcion"
-                    data.apply_tag(tagFun,p1,p2)
-                elif re.search("^al+[A,C,P,F,S]{1}.*_Hoja\d{1,2}$",linea):
-                    if linea.split("_")[0] in eventos:
-                        if linea.split("_")[1] in objetos:
-                            data.apply_tag(tagEve,p1,p2)
-                            continue
-                        else:
-                            data.apply_tag(tagErr,p1,p2)
-                            error="Error de Sintaxis en la linea "+str(i+1)+" Esta Escena No existe"
-                            break
-                        els:
-                        data.apply_tag(tagErr,p1,p2)
-                        error="Error Lexico en la linea"+str(i+1)+" La escena no posee el evento"
-                        break
-                    els:
-                    data.apply_tag(tagErr,p1,p2)
-                    error= "Error de sintaxis no se reconoce lo escrito en la linea "+str(i+1)
-                    break"""
         self.statusbar.push(0,str(lineas))
 
     def salir(self,widget,data=None):
