@@ -540,6 +540,7 @@ class Ventana:
         #variables de control (banderas)
         inicioLinea=True
         declaracionVariables=True
+        abiertoBloque=""
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
             ncr=p1.get_chars_in_line()-1
@@ -618,6 +619,7 @@ class Ventana:
                                                         #Que tipo evento de sistema es?
                                                         if token==eventosValidos[0]:
                                                             print "Ok evento de sistema tipo cronometro"
+                                                            abiertoBloque="cronometroSistema"
                                                         else:
                                                             #Ya hay un ciclo de sistema?
                                                             if "ciclo" in variablesDeclaradas:
@@ -625,6 +627,7 @@ class Ventana:
                                                                 break
                                                             else:
                                                                 variablesDeclaradas.append("ciclo")
+                                                                abiertoBloque="cicloSistema"
                                                                 print "Ok evento de sistema tipo ciclo"
                                                     else:
                                                         print "El argumento debe ser un numero entero mayor de 99"
@@ -653,6 +656,7 @@ class Ventana:
                                                 break
                                             else:
                                                 variablesDeclaradas.append(token)
+                                                abiertoBloque=str(token)
                                                 print "Ok es un evento de hoja correcto"
                                         else:
                                             print "Debe terminar la linea con :"
@@ -685,6 +689,7 @@ class Ventana:
                                                     #el resto es minusculas?
                                                     if re.search("^[A-Z].[^A-Z]",nombre[0:-1]):
                                                         print "Ok el objeto es correcto"
+                                                        abiertoBloque=nombre[0:-1]
                                                     else:
                                                         print "Solo la primera letra debe ser mayuscula"
                                                         break
@@ -715,13 +720,20 @@ class Ventana:
                             break
                 #inicioLinea false
                 else:
+                    #comienza con un tab?
                     if re.search("^\t",linea):
                         print "elemento interno"
-                    else:
-                        if linea.split("->")[0]=="fin":
+                    #empieza por fin->?
+                    elif re.search("^fin->",linea):
+                        #Cierra el bloque abierto?
+                        if linea.split("->")[1]==abiertoBloque:
                             inicioLinea=True
+                            abiertoBloque=""
                         else:
                             print "debe cerrar el evento"
+                    else:
+                        print "Elemento de Bloque incorrecto debe iniciar con tab"
+                        break
             else:
                 linea=""
                 continue
