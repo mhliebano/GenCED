@@ -13,8 +13,9 @@ class Ventana:
         self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
         self.window.set_position(gtk.WIN_POS_CENTER)
         self.window.set_title("Generador de CED")
+        self.window.set_default_size(640,480)
         self.window.maximize()
-        self.window.set_resizable(False)
+        self.window.set_resizable(True)
         self.window.set_icon_from_file(os.path.join(ruta,'iconos/iconoApp.png'))
         color = gtk.gdk.color_parse('#ffffff')
         self.window.modify_bg(gtk.STATE_NORMAL, color)
@@ -715,7 +716,7 @@ class Ventana:
                 #inicioLinea false
                 else:
                     if re.search("^\t",linea):
-                        print "elemento de funcion"
+                        print "elemento interno"
                     else:
                         if linea.split("->")[0]=="fin":
                             inicioLinea=True
