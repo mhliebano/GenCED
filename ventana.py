@@ -532,7 +532,8 @@ class Ventana:
     def analizador(self,widget,data=None,objetos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
-        variablesValidas=["varg","varl"]
+        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada"]
+        variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
         obje=objetos
         ini,fin=data.get_bounds()
@@ -540,6 +541,7 @@ class Ventana:
         #variables de control (banderas)
         inicioLinea=True
         declaracionVariables=True
+        variablesLocales=True
         abiertoBloque=""
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
@@ -573,7 +575,7 @@ class Ventana:
                                                 break
                                             #No ha sido declarada
                                             else:
-                                                variablesDeclaradas.append(nombre)
+                                                variablesDeclaradas.append(variable)
                                                 #esta vacia la asignacion
                                                 if asignacion=="":
                                                     print "La asignacion no puede estar vacia"
@@ -689,7 +691,7 @@ class Ventana:
                                                     #el resto es minusculas?
                                                     if re.search("^[A-Z].[^A-Z]",nombre[0:-1]):
                                                         print "Ok el objeto es correcto"
-                                                        abiertoBloque=nombre[0:-1]
+                                                        abiertoBloque=token
                                                     else:
                                                         print "Solo la primera letra debe ser mayuscula"
                                                         break
@@ -722,13 +724,133 @@ class Ventana:
                 else:
                     #comienza con un tab?
                     if re.search("^\t",linea):
-                        print "elemento interno"
+                        #tiene el apuntador?
+                        if re.search("->",linea):
+                            token=linea.split("->")[0]
+                            nombre=linea.split("->")[1]
+                            #podemos declarar variables locales?
+                            if variablesLocales==True:
+                                #es una variable valida?
+                                if token in variablesValidas:
+                                    #es una variable local?
+                                    if re.search("^\tvarl",linea):
+                                        #esta asignada?
+                                        if re.search("=",nombre):
+                                            variable=nombre.split("=")[0]
+                                            asignacion=nombre.split("=")[1]
+                                            #contiene solo letras minusculas?
+                                            if re.search("^[a-z]*$",variable):
+                                                #Ya fue declarada?
+                                                if nombre in variablesDeclaradas:
+                                                    print "Esta Variable ya fue declarada"
+                                                    break
+                                                #No ha sido declarada
+                                                else:
+                                                    variablesDeclaradas.append(nombre)
+                                                    #esta vacia la asignacion
+                                                    if asignacion=="":
+                                                        print "La asignacion no puede estar vacia"
+                                                        break
+                                                    #es una variable numerica?
+                                                    elif re.search("^[0-9]*.[0-9]*$",asignacion):
+                                                        print "posible numero"
+                                                    #es una variable de texto
+                                                    elif re.search("^\"*.*\"$",asignacion):
+                                                        print "posible cadena"
+                                                    #asignacion de algun metodo o funcion?
+                                                    elif "\t"+asignacion.split("(")[0] in elementosBloque:
+                                                        #solo las permitidas que retornan valores
+                                                        if asignacion.split("(")[0]=="propiedad":
+                                                            print "asignada retorna propiedad"
+                                                        elif asignacion.split("(")[0]=="confirmacion":
+                                                            print "asignada confirmacion"
+                                                        elif asignacion.split("(")[0]=="entrada":
+                                                            print "entrada"
+                                                        else:
+                                                            print "El metodo no retorna valor para ser asignado" 
+                                                            break
+                                                    #ninguna de las anteriores
+                                                    else:
+                                                        print "Asignacion Incorrecta"
+                                                        break
+                                            else:
+                                                print "solo se admiten letras minusculas en las variables"
+                                                break
+                                        else:
+                                            print "la variable debe ser asignada"
+                                            break
+                                    # es una variable general?
+                                    elif re.search("^\tvarg",linea):
+                                        if re.search("=",nombre):
+                                            variable=nombre.split("=")[0]
+                                            asignacion=nombre.split("=")[1]
+                                            #contiene solo letras minusculas?
+                                            if re.search("^[a-z]*$",variable):
+                                                #Ya fue declarada?
+                                                if variable not in variablesDeclaradas:
+                                                    print "Esta Variable No fue declarada"
+                                                    break
+                                                #No ha sido declarada
+                                                else:
+                                                    #esta vacia la asignacion
+                                                    if asignacion=="":
+                                                        print "La asignacion no puede estar vacia"
+                                                        break
+                                                    #es una variable numerica?
+                                                    elif re.search("^[0-9]*.[0-9]*$",asignacion):
+                                                        print "posible numero"
+                                                    #es una variable de texto
+                                                    elif re.search("^\"*.*\"$",asignacion):
+                                                        print "posible cadena"
+                                                    #asignacion de algun metodo o funcion?
+                                                    elif "\t"+asignacion.split("(")[0] in elementosBloque:
+                                                        #solo las permitidas que retornan valores
+                                                        if asignacion.split("(")[0]=="propiedad":
+                                                            print "asignada retorna propiedad"
+                                                        elif asignacion.split("(")[0]=="confirmacion":
+                                                            print "asignada confirmacion"
+                                                        elif asignacion.split("(")[0]=="entrada":
+                                                            print "entrada"
+                                                        else:
+                                                            print "El metodo no retorna valor para ser asignado" 
+                                                            break
+                                                    #ninguna de las anteriores
+                                                    else:
+                                                        print "Asignacion Incorrecta"
+                                                        break
+                                            else:
+                                                print "solo se admiten letras minusculas en las variables"
+                                                break
+                                        else:
+                                            print "la variable debe ser asignada"
+                                            break
+                                    else:
+                                        print "No se reconoce la variable"
+                                else:
+                                    print "No es una variable valida"
+                                    break
+                            else:
+                                print "declaracion de variable fuera de contexto"
+                                break
+                        else:
+                            #No tiene apuntador
+                            variablesLocales=False
+                            #Probamos con elementos de bloque
+                            token=linea.split("(")[0]
+                            parametro=linea.split("(")[1]
+                            #es un elemento de bloque?
+                            if token in elementosBloque:
+                                print "elemento valido"
+                            else:
+                                print "no se reconoce el elemento"
+                                break
                     #empieza por fin->?
                     elif re.search("^fin->",linea):
                         #Cierra el bloque abierto?
                         if linea.split("->")[1]==abiertoBloque:
                             inicioLinea=True
                             abiertoBloque=""
+                            variablesLocales=True
                         else:
                             print "debe cerrar el evento"
                     else:
