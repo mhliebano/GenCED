@@ -5,6 +5,7 @@ import gtk
 import shutil
 import os
 from objetos import *
+from analizador import *
 class Acciones:
     
     def __init__(self,IGU):
@@ -754,7 +755,8 @@ class Acciones:
             obj=[]
             for i in range(len(self.objetos[self.puntero])):
                 obj.append(self.objetos[self.puntero][i])
-            self.igu.cuadroDialogoScript(obj)
+            #self.igu.cuadroDialogoScript(obj)
+            editorEscritos=Analizador(obj)
         self.actualizaArbol()
         self.EDITADO=0
         self.igu.barraGua.set_sensitive(True)
