@@ -608,6 +608,76 @@ class Analizador():
                                     else:
                                         descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere tres parametros"
                                         break
+                                elif token=="\tmover":
+                                    param=parametro.split(",")
+                                    if len(param)==4:
+                                        ob=False
+                                        #buscamos el objeto
+                                        for i in range(0,len(obje)):
+                                            if(obje[i].nombre == param[0]):
+                                                ob=True
+                                                break
+                                        #No existe?
+                                        if ob==False:
+                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
+                                            break
+                                        #Si existe?
+                                        else:
+                                            if param[1].isdigit():
+                                                if param[1].isdigit():
+                                                    atr=param[3]
+                                                    atr=atr[0:len(atr)-1]
+                                                    if atr == "Si":
+                                                        print "ok movemos con efecto"
+                                                    elif atr == "No":
+                                                        print "ok movemos sin efecto"
+                                                    else:
+                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el cuarto parametro sea (Si o No)"
+                                                        break
+                                                else:
+                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El tercer argumento debe ser un entero"
+                                                    break
+                                            else:
+                                                descrError= "ERROR en la linea "+str(i+1)+"=> El segundo argumento debe ser un entero"
+                                                break
+                                    else:
+                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere cuatro parametros"
+                                        break
+                                elif token=="\tredimensionar":
+                                    param=parametro.split(",")
+                                    if len(param)==4:
+                                        ob=False
+                                        #buscamos el objeto
+                                        for i in range(0,len(obje)):
+                                            if(obje[i].nombre == param[0]):
+                                                ob=True
+                                                break
+                                        #No existe?
+                                        if ob==False:
+                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
+                                            break
+                                        #Si existe?
+                                        else:
+                                            if param[1].isdigit():
+                                                if param[1].isdigit():
+                                                    atr=param[3]
+                                                    atr=atr[0:len(atr)-1]
+                                                    if atr == "Si":
+                                                        print "ok redimensionamos con efecto"
+                                                    elif atr == "No":
+                                                        print "ok redimensionamos sin efecto"
+                                                    else:
+                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el cuarto parametro sea (Si o No)"
+                                                        break
+                                                else:
+                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El tercer argumento debe ser un entero"
+                                                    break
+                                            else:
+                                                descrError= "ERROR en la linea "+str(i+1)+"=> El segundo argumento debe ser un entero"
+                                                break
+                                    else:
+                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere cuatro parametros"
+                                        break
                                 else:
                                     print "Que extraño que llegamos aca"
                                     break
