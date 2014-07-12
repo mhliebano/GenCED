@@ -167,6 +167,9 @@ class Analizador():
         elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada"]
         variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
+        colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
+        bordes={"punteado":"dotted","discontinuo":"dashed","solido":"solid","doble":"double","acanalado":"groove","corrugado":"ridge","relieve bajo":"inset","relieve alto":"outset"}
+        atributosOb={"colorFondo":"background-color","transparencia":"transparency","ancho":"width","alto":"height","x":"left","y":"top","borde":"border-style","colorBorde":"border-color","anchoBorde":"border-width","sombra":"shadow","rotar":"-webkit-transform:rotate","oculto":"hidden"}
         obje=objetos
         ini,fin=data.get_bounds()
         lineas=data.get_line_count()+1
@@ -176,13 +179,14 @@ class Analizador():
         variablesLocales=True
         abiertoBloque=""
         descrError="Ok todo Bien"
+        script="$( document ).ready(function() {"
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
             ncr=p1.get_chars_in_line()-1
             if ncr>0:#esto es para evitar el molestoso aborto de gtk cuando las linea esta vacia
                 p2=data.get_iter_at_line_offset(i,ncr)
                 linea = data.get_text(p1,p2)
-                print "linea "+str(i+1)+": "+linea
+                #print "linea "+str(i+1)+": "+linea
                 #inicioLinea=true
                 if inicioLinea:
                     if re.search("^\t",linea):
@@ -215,10 +219,12 @@ class Analizador():
                                                     break
                                                 #es una variable numerica?
                                                 elif re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    print "posible numero"
+                                                    #print "posible numero"
+                                                    script=script+"var "+variable+" = "+asignacion+";"
                                                 #es una variable de texto
                                                 elif re.search("^\"*.*\"$",asignacion):
-                                                    print "posible cadena"
+                                                    #print "posible cadena"
+                                                    script=script+"var "+variable+" = '"+asignacion+"';"
                                                 #ninguna de las anteriores
                                                 else:
                                                     descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se le puede asignar ese valor"
@@ -253,7 +259,8 @@ class Analizador():
                                                     if int(nombre[8:-2])>99:
                                                         #Que tipo evento de sistema es?
                                                         if token==eventosValidos[0]:
-                                                            print "Ok evento de sistema tipo cronometro"
+                                                            #print "Ok evento de sistema tipo cronometro"
+                                                            script=script+ "var crono = $.timer(function() {"
                                                             abiertoBloque="cronometroSistema"
                                                         else:
                                                             #Ya hay un ciclo de sistema?
@@ -263,7 +270,8 @@ class Analizador():
                                                             else:
                                                                 variablesDeclaradas.append("ciclo")
                                                                 abiertoBloque="cicloSistema"
-                                                                print "Ok evento de sistema tipo ciclo"
+                                                                script=script +"var timer = $.timer(function() {"
+                                                                #print "Ok evento de sistema tipo ciclo"
                                                     else:
                                                         descrError= "ERROR en la linea "+str(i+1)+"=> El argumento del ciclo debe ser mayor a 50"
                                                         break
@@ -292,7 +300,21 @@ class Analizador():
                                             else:
                                                 variablesDeclaradas.append(token)
                                                 abiertoBloque=str(token)
-                                                print "Ok es un evento de hoja correcto"
+                                                #print "Ok es un evento de hoja correcto"
+                                                #"alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"
+                                                if token=="alAbrir":
+                                                    script=script+ "$(window).load(function(){"
+                                                elif token=="alCerrar":
+                                                    script=script+ "$(window).unload(function(){"
+                                                elif token =="alPresionarTecla":
+                                                    script=script+ "$(window).keypress(function(e){"
+                                                elif token =="alSoltarTecla":
+                                                    script=script+ "$(window).keyup(function(e){"
+                                                elif token =="alPulsarTecla":
+                                                    script=script+ "$(window).keydown(function(e){"
+                                                else:
+                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Estas Funciones aun no estan implementadas"
+                                                    break
                                         else:
                                             descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
                                             break
@@ -324,8 +346,21 @@ class Analizador():
                                                 if re.search("^[A-Z]",nombre[0:-1]):
                                                     #el resto es minusculas?
                                                     if re.search("^[A-Z].[^A-Z]",nombre[0:-1]):
-                                                        print "Ok el objeto es correcto"
+                                                        #print "Ok el objeto es correcto"
+                                                        #"click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"
                                                         abiertoBloque=token
+                                                        if token=="click":
+                                                            script=script+ "$('#"+str(nombre[0:-1])+"').click(function(){"
+                                                        elif token=="dobleClick":
+                                                            script=script+ "$('#"+str(nombre[0:-1])+"').dblclick(function(){"
+                                                        elif token=="ratonSobre":
+                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mouseover(function(){"
+                                                        elif token=="ratonFuera":
+                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mouseout(function(){"
+                                                        elif token=="ratonPresionado":
+                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mousedown(function(){"
+                                                        elif token=="ratonLiberado":
+                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mouseup(function(){"
                                                     else:
                                                         descrError= "ERROR en la linea "+str(i+1)+"=> El nombre del objeto "+str(nombre[-1])+" solo de contener la primera letra en Mayuscula"
                                                         break
@@ -385,10 +420,12 @@ class Analizador():
                                                     break
                                                 #es una variable numerica?
                                                 elif re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    print "posible numero"
+                                                    #print "posible numero"
+                                                    script=script+"var "+variable+" = "+asignacion+";"
                                                 #es una variable de texto
                                                 elif re.search("^\"*.*\"$",asignacion):
-                                                    print "posible cadena"
+                                                    #print "posible cadena"
+                                                    script=script+"var "+variable+" = '"+asignacion+"';"
                                                 #asignacion de algun metodo o funcion?
                                                 elif "\t"+asignacion.split("(")[0] in elementosBloque:
                                                     #solo las permitidas que retornan valores
@@ -431,10 +468,12 @@ class Analizador():
                                                     break
                                                 #es una variable numerica?
                                                 elif re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    print "posible numero"
+                                                    #print "posible numero"
+                                                    script=script+"var "+variable+" = "+asignacion+";"
                                                 #es una variable de texto
                                                 elif re.search("^\"*.*\"$",asignacion):
-                                                    print "posible cadena"
+                                                    #print "posible cadena"
+                                                    script=script+"var "+variable+" = '"+asignacion+"';"
                                                 #asignacion de algun metodo o funcion?
                                                 elif "\t"+asignacion.split("(")[0] in elementosBloque:
                                                     #solo las permitidas que retornan valores
@@ -492,11 +531,12 @@ class Analizador():
                                             atr=param[1]
                                             atr=atr[0:len(atr)-1]
                                             if atr in atributos:
-                                                print "ok retornamos la propiedad"
+                                                #print "ok retornamos la propiedad"
+                                                script=script+"$('#"+param[0]+"').;"
                                             else:
                                                 descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" tiene la propiedad indicada"
                                                 break
-                                    #asigna valor a la propieda
+                                    #asigna valor a la propiedad
                                     elif len(param)==3:
                                         ob=False
                                         #buscamos el objeto
@@ -514,7 +554,12 @@ class Analizador():
                                             atr=param[1]
                                             if atr in atributos:
                                                 valor=param[2]
-                                                print "Ok asignamos el valor "+valor[0:len(valor)-1]
+                                                #print "Ok asignamos el valor "+valor[0:len(valor)-1]
+                                                if atr=="colorFondo" or atr=="colorBorde":
+                                                    valor=str(colores[valor[0:len(valor)-1]])
+                                                else:
+                                                    valor=str(valor[0:len(valor)-1])
+                                                script=script+"$('#"+param[0]+"').css('"+str(atributosOb[atr])+"','"+valor+"');"
                                             else:
                                                 descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" tiene la propiedad indicada"
                                                 break
@@ -678,6 +723,12 @@ class Analizador():
                                     else:
                                         descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere cuatro parametros"
                                         break
+                                elif token=="\tmensaje":
+                                    parametro=parametro[0,len(parametro)-1]
+                                elif token=="\tconfirmacion":
+                                    parametro=parametro[0,len(parametro)-1]
+                                elif token=="\tentrada":
+                                    parametro=parametro[0,len(parametro)-1]
                                 else:
                                     print "Que extraño que llegamos aca"
                                     break
@@ -688,6 +739,10 @@ class Analizador():
                     elif re.search("^fin->",linea):
                         #Cierra el bloque abierto?
                         if linea.split("->")[1]==abiertoBloque:
+                            if abiertoBloque=="cicloSistema":
+                                script=script+"});timer.set({ time : 100, autostart : true });"
+                            else:
+                                script=script+"});"
                             inicioLinea=True
                             abiertoBloque=""
                             variablesLocales=True
@@ -699,4 +754,7 @@ class Analizador():
             else:
                 linea=""
                 continue
+        script=script+"});"
+        #print script
+        obje[0].javascript="<script>"+script+"</script>"
         self.barraEstado.push(0,descrError)
