@@ -28,7 +28,7 @@ class Escena(object):
         self.ajusteImagen="Falso"
         self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0}
         self.escritos=""
-        self.javascript='<script>function send(msg){document.title = msg;}</script>'
+        self.javascript=""#'<script>function send(msg){document.title = msg;}</script>'
     def obtenerNombre(self):
         return self._nombre
     
