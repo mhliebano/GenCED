@@ -8,4 +8,3 @@ if __name__ == "__main__":
     misacciones=Acciones(miventana)
     miventana.hojaBienvenida()
     miventana.main()
-
