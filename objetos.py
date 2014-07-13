@@ -28,7 +28,7 @@ class Escena(object):
         self.ajusteImagen="Falso"
         self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0}
         self.escritos=""
-        self.javascript=""#'<script>function send(msg){document.title = msg;}</script>'
+        self.javascript=""
     def obtenerNombre(self):
         return self._nombre
     
@@ -56,7 +56,7 @@ class Cuadro(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border:"+str(bordes[self.borde])+" "+str(colores[self.colorBorde])+" "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'></div>"
+        a="<div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%; border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'></div>"
         return a
     
     def retornaPropiedades(self):
@@ -74,7 +74,7 @@ class Circulo(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border:"+str(bordes[self.borde])+" "+str(colores[self.colorBorde])+" "+str(self.anchoBorde) +"pt;-webkit-border-radius:"+str(self.radio)+"px' onclick='send(this.id)'></div>"
+        a="<div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-border-radius:"+str(self.radio)+"px'  onclick='send(this.id)'></div>"
         return a
     
     def retornaPropiedades(self):
@@ -91,7 +91,7 @@ class Triangulo(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='width:0;height:0;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-bottom:"+str(self.alto)+"pt solid "+str(colores[self.colorFondo])+"; border-left:"+str(self.ancho)+"pt solid transparent;    border-right: "+str(self.ancho)+"pt solid transparent;line-height: 0;font-size:0;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'></div>"
+        a="<div id='"+str(self._nombre)+"' style='width:0;height:0;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-bottom:"+str(self.alto)+"pt solid "+str(colores[self.colorFondo])+"; border-left:"+str(self.ancho)+"pt solid transparent;    border-right: "+str(self.ancho)+"pt solid transparent;line-height: 0;font-size:0;-webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'></div>"
         return a
     
     def retornaPropiedades(self):
@@ -108,14 +108,13 @@ class Linea(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='width:"+str(self.ancho)+"%;height:0%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-top:"+str(bordes[self.borde])+" "+str(self.anchoBorde)+"px "+str(colores[self.colorBorde])+"; -webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'></div>"
+        a="<div id='"+str(self._nombre)+"' style='width:"+str(self.ancho)+"%;height:0%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-top:"+str(bordes[self.borde])+" "+str(self.anchoBorde)+"px "+str(colores[self.colorBorde])+"; -webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'></div>"
         return a
     
     def retornaPropiedades(self):
         return "l\\"+str(self.ancho)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\n"
     
     nombre = property(obtenerNombre)
-
 
 class Imagen(ObjetoPrimario):
     def __init__(self,x):
@@ -129,9 +128,9 @@ class Imagen(ObjetoPrimario):
     
     def actualizaCadena(self,archivo):
         if self.clip==0:
-            a="<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%' style='position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border:"+str(bordes[self.borde])+" "+str(colores[self.colorBorde])+" "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'/></div>"
+            a="<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%' style='position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'/></div>"
         else:
-            a="<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%' style='position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border:"+str(bordes[self.borde])+" "+str(colores[self.colorBorde])+" "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);clip("+str(self.clip)+")' onclick='send(this.id)'></div>"
+            a="<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%' style='position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);clip("+str(self.clip)+")'  onclick='send(this.id)' ></div>"
         return a
     
     def retornaPropiedades(self):
@@ -154,9 +153,9 @@ class Texto(ObjetoPrimario):
     
     def actualizaCadena(self,archivo):
         if self.parrafo=="Falso":
-            a="<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border:"+str(bordes[self.borde])+" "+str(colores[self.colorBorde])+" "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+"' onclick='send(this.id)'>"+str(self.texto)+"</div>"
+            a="<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+"'  onclick='send(this.id)' >"+str(self.texto)+"</div>"
         else:
-            a="<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border:"+str(bordes[self.borde])+" "+str(colores[self.colorBorde])+" "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+";overflow-y:visible;overflow-x:hidden;' onclick='send(this.id)'>"+str(self.texto)+"</div>"
+            a="<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+";overflow-y:visible;overflow-x:hidden;'   onclick='send(this.id)'>"+str(self.texto)+"</div>"
         return a
     
     def retornaPropiedades(self):
@@ -176,7 +175,7 @@ class Boton(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<button id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'>"+str(self.texto)+"</button>"
+        a="<button id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'  onclick='send(this.id)'>"+str(self.texto)+"</button>"
         return a
     
     def retornaPropiedades(self):
@@ -197,7 +196,7 @@ class Entrada(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<input id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' type='text' value='"+str(self.texto)+"' onclick='send(this.id)'/>"
+        a="<input id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' type='text' value='"+str(self.texto)+"'  onclick='send(this.id)'/>"
         return a
     
     def retornaPropiedades(self):
@@ -218,7 +217,7 @@ class Lista(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<select id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'>"
+        a="<select id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'>"
         op=self.lista.split(",")
         for i in range(len(op)):
             a=a+str("<option value='"+str(op[i])+"'>"+str(op[i])+"</option>")
@@ -243,7 +242,7 @@ class Check(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<input id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' type='checkbox' value='"+str(self.valor)+"' onclick='send(this.id)'/>"
+        a="<input id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' type='checkbox' value='"+str(self.valor)+"'  onclick='send(this.id)'/>"
         return a
     
     def retornaPropiedades(self):
@@ -264,7 +263,7 @@ class Area(ObjetoPrimario):
         return self._nombre
     
     def actualizaCadena(self,archivo):
-        a="<textarea id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'>"+str(self.texto)+"</textarea>"
+        a="<textarea id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'  onclick='send(this.id)'>"+str(self.texto)+"</textarea>"
         return a
     
     def retornaPropiedades(self):
