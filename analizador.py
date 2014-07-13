@@ -76,6 +76,7 @@ class Analizador():
         f=listaIzquierda.append(padre,["mensaje",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["confirmacion",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["entrada",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
+        f=listaIzquierda.append(padre,["mostrarPantalla",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         padre=listaIzquierda.append(None,["Controles de Flujo",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png'))])
         f=listaIzquierda.append(padre,["Si",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/if.png'))])
         f=listaIzquierda.append(padre,["Mientras",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/if.png'))])
@@ -161,15 +162,16 @@ class Analizador():
             base=base + lineaCodigo
             self.barraEstado.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[0]))
             escrito.set_text(base)
+    
     def analizador(self,widget,data=None,objetos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
-        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada"]
+        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla"]
         variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
         colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
         bordes={"punteado":"dotted","discontinuo":"dashed","solido":"solid","doble":"double","acanalado":"groove","corrugado":"ridge","relieve bajo":"inset","relieve alto":"outset"}
-        atributosOb={"colorFondo":"background-color","transparencia":"transparency","ancho":"width","alto":"height","x":"left","y":"top","borde":"border-style","colorBorde":"border-color","anchoBorde":"border-width","sombra":"shadow","rotar":"-webkit-transform:rotate","oculto":"hidden"}
+        atributosOb={"colorFondo":"background-color","transparencia":"transparency","ancho":"width","alto":"height","x":"left","y":"top","borde":"border-style","colorBorde":"borderTopColor","anchoBorde":"border-width","sombra":"shadow","rotar":"-webkit-transform:rotate","oculto":"hidden"}
         obje=objetos
         ini,fin=data.get_bounds()
         lineas=data.get_line_count()+1
@@ -413,7 +415,8 @@ class Analizador():
                                                 break
                                             #No ha sido declarada
                                             else:
-                                                variablesDeclaradas.append(nombre)
+                                                v=nombre.split("=")
+                                                variablesDeclaradas.append(v[0])
                                                 #esta vacia la asignacion
                                                 if asignacion=="":
                                                     descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=) no vacia"
@@ -430,11 +433,44 @@ class Analizador():
                                                 elif "\t"+asignacion.split("(")[0] in elementosBloque:
                                                     #solo las permitidas que retornan valores
                                                     if asignacion.split("(")[0]=="propiedad":
-                                                        print "asignada retorna propiedad"
+                                                        #print "asignada retorna propiedad"
+                                                        param=asignacion.split("(")
+                                                        param=param[1].split(",")
+                                                        #retorna el valor de la propiedad
+                                                        if len(param)==2:
+                                                            ob=False
+                                                            #buscamos el objeto
+                                                            for i in range(0,len(obje)):
+                                                                if(obje[i].nombre == param[0]):
+                                                                    atributos= obje[i].__dict__
+                                                                    ob=True
+                                                                    break
+                                                            #No existe?
+                                                            if ob==False:
+                                                                descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
+                                                                break
+                                                            #Si existe?
+                                                            else:
+                                                                atr=param[1]
+                                                                atr=atr[0:len(atr)-1]
+                                                                if atr in atributos:
+                                                                    script=script+"var "+variable+"=$('#"+param[0]+"').css('"+str(atributosOb[atr])+"');"
+                                                                else:
+                                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" tiene la propiedad indicada"
+                                                                    break
+                                                        else:
+                                                            descrError= "ERROR en la linea "+str(i+1)+"=> propiedad admite solo 2 argumentos en este contexto"
+                                                            break
                                                     elif asignacion.split("(")[0]=="confirmacion":
-                                                        print "asignada confirmacion"
+                                                        #print "asignada confirmacion"
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        script=script+"var "+variable+"=confirm('"+atr+"');"
                                                     elif asignacion.split("(")[0]=="entrada":
-                                                        print "entrada"
+                                                        #print "entrada"
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        script=script+"var "+variable+"=prompt('"+atr+"');"
                                                     else:
                                                         descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se le puede asignar valor" 
                                                         break
@@ -508,6 +544,7 @@ class Analizador():
                             #Probamos con elementos de bloque
                             token=linea.split("(")[0]
                             parametro=linea.split("(")[1]
+                            print token
                             #es un elemento de bloque?
                             if token in elementosBloque:
                                 #cual elemento es?
@@ -556,9 +593,11 @@ class Analizador():
                                                 valor=param[2]
                                                 #print "Ok asignamos el valor "+valor[0:len(valor)-1]
                                                 if atr=="colorFondo" or atr=="colorBorde":
-                                                    valor=str(colores[valor[0:len(valor)-1]])
+                                                    valor=valor[0:len(valor)-1]
+                                                    valor=colores[str(valor)]
                                                 else:
-                                                    valor=str(valor[0:len(valor)-1])
+                                                    valor=valor[0:len(valor)-1]
+                                                    valor=str(valor)
                                                 script=script+"$('#"+param[0]+"').css('"+str(atributosOb[atr])+"','"+valor+"');"
                                             else:
                                                 descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" tiene la propiedad indicada"
@@ -724,11 +763,24 @@ class Analizador():
                                         descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere cuatro parametros"
                                         break
                                 elif token=="\tmensaje":
-                                    parametro=parametro[0,len(parametro)-1]
+                                    parametro=parametro[0:len(parametro)-1]
+                                    if parametro in variablesDeclaradas:
+                                        script=script+"alert("+parametro+");"
+                                    else:
+                                        script=script+"alert('"+parametro+"');"
                                 elif token=="\tconfirmacion":
-                                    parametro=parametro[0,len(parametro)-1]
+                                    descrError= "ERROR en la linea "+str(i+1)+"=> Este metodo debe ser asignado"
+                                    break
                                 elif token=="\tentrada":
-                                    parametro=parametro[0,len(parametro)-1]
+                                    descrError= "ERROR en la linea "+str(i+1)+"=> Este metodo debe ser asignado"
+                                    break
+                                elif token=="\tmostrarPantalla":
+                                    parametro=parametro[0:len(parametro)-1]
+                                    print variablesDeclaradas
+                                    if parametro in variablesDeclaradas:
+                                        script=script+"$(document.body).append("+parametro+");"
+                                    else:
+                                        script=script+"$(document.body).append('"+parametro+"');"
                                 else:
                                     print "Que extraño que llegamos aca"
                                     break
@@ -755,6 +807,9 @@ class Analizador():
                 linea=""
                 continue
         script=script+"});"
-        #print script
+        obje[0].javascript=""
+        obje[0].escritos=""
+        print script
         obje[0].javascript="<script>"+script+"</script>"
+        obje[0].escritos=data.get_text(*data.get_bounds())
         self.barraEstado.push(0,descrError)
