@@ -55,12 +55,13 @@ class Acciones:
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
             return
         for i in range(len(self.objetos)):
-            pagina="<html><head><script>function send(id){document.title=id}</script></head>"
+            pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script>function send(id){}</script>"+self.objetos[0][0].javascript+"</head>"
             for j in range(len(self.objetos[i])):
                 pagina=pagina+str(self.objetos[i][j].actualizaCadena(self.proyecto.ruta))
             pagina=pagina+"</body></html>"
             self.proyecto.paginas.append(pagina)
             pagina=""
+            
         self.proyecto.ejecutar()
     
     def presionaTecla(self,widget,event):
@@ -307,6 +308,9 @@ class Acciones:
                     os.mkdir(proyecto+"/recursos/videos")
                     os.mkdir(proyecto+"/recursos/archivos")
                     os.mkdir(proyecto+"/conf")
+                    destino=self.proyecto.ruta+"/recursos/jquery.js"
+                    origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.js"
+                    shutil.copy(origen,destino)
                     #Rutina para escrubir el Archivo de configuración Inicial
                     conf=open(proyecto+"/conf/configuracion.txt","a")
                     conf.write("GCEDV1.0"+"\n")
@@ -316,6 +320,9 @@ class Acciones:
                     #self.hojas.append(["hoja0"])
                     hoja=Escena(0)
                     conf.write(hoja.retornaPropiedades())
+                    conf.close()
+                    conf=open(proyecto+"/conf/escrito0.gcd","a")
+                    conf.write("[s]")
                     conf.close()
                     self.objetos.append([hoja])
                     self.recursos.append(["imagenes"])
@@ -349,7 +356,7 @@ class Acciones:
     
     def actulizaLienzo(self,tipo=0):
         marca=""
-        pagina="<html><head><title></title>"+self.objetos[self.puntero][0].javascript+"</head>"
+        pagina="<html><head><title></title><script>function send(id){document.title=id}</script></head>"
         if tipo==0:
             for i in range(len(self.objetos[self.puntero])):
                 if len(self.nivel)==4 and (self.nivel[3]+1)==i:
@@ -385,6 +392,11 @@ class Acciones:
             conf.write("pr\\"+str(self.proyecto.ancho)+"\\"+str(self.proyecto.alto)+"\\"+str(self.proyecto.maximizado)+"\n")
             for fila in range(len(self.objetos)):
                 conf.write("0\\"+str(self.objetos[fila][0].nombre)+"\n")
+                esc=open(self.proyecto.ruta+"/conf/escrito"+str(fila)+".gcd","w")
+                esc.write(self.objetos[fila][0].escritos)
+                esc.write("[s]")
+                esc.write(self.objetos[fila][0].javascript)
+                esc.close()
                 #gp=open(self.rutaProyecto+"/app/"+str(self.objetos[fila][0].nombre),"w")
                 #gp.write(self.objetos[fila][0].nombre+"\n")
                 conf.write(self.objetos[fila][0].retornaPropiedades())
@@ -475,6 +487,12 @@ class Acciones:
                         hoja.transparencia=x[2]
                         hoja.imagen=x[3]
                         hoja.ajusteImagen=x[4]
+                        esc=open(self.proyecto.ruta+"/conf/escrito"+str(ind)+".gcd","r")
+                        contenido=esc.read()
+                        dupla=contenido.split("[s]")
+                        esc.close()
+                        hoja.escritos=dupla[0]
+                        hoja.javascript=dupla[1]
                         self.objetos.append([hoja])
                     if x[0]=="c":
                         obj=Cuadro(self.objetos[ind][0].cuentaObjetos["cuadro"])
@@ -682,6 +700,9 @@ class Acciones:
         if self.proyecto!="":
             hoja=Escena(str(len(self.objetos)))
             self.objetos.append([hoja])
+            conf=open(self.proyecto.ruta+"/conf/escrito"+str(len(self.objetos)-1)+".gcd","a")
+            conf.write("[s]")
+            conf.close()
             self.actualizaArbol()
             self.igu.barraGua.set_sensitive(True)
             self.igu.barraGuc.set_sensitive(True)
@@ -771,7 +792,7 @@ class Acciones:
             return
         dialog = gtk.FileChooserDialog(title="Insertar Recurso",action=gtk.FILE_CHOOSER_ACTION_OPEN,
                                   buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
-
+        dialog.set_filename(os.path.dirname(os.path.realpath(__file__))+"/recursos")
         filtro = gtk.FileFilter()
         if data==0:
             filtro.set_name("Images")
