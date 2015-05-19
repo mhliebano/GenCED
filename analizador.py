@@ -172,7 +172,7 @@ class Analizador():
     def analizador(self,widget,data=None,objetos=None,recursos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
-        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar"]
+        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro"]
         variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
         colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
@@ -192,6 +192,7 @@ class Analizador():
         teclas=False
         cierraTecla=False
         descrError="Ok todo Bien"
+        cron=0
         script="$( document ).ready(function() { wh= parseInt(document.body.clientWidth);hh= parseInt(document.body.clientHeight);"
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
@@ -281,8 +282,9 @@ class Analizador():
                                                         #Que tipo evento de sistema es?
                                                         if token==eventosValidos[0]:
                                                             #print "Ok evento de sistema tipo cronometro"
-                                                            script=script+ "var crono = $.timer(function() {"
+                                                            script=script+ "var crono"+str(cron)+" = $.timer(function() {"
                                                             abiertoBloque="cronometroSistema"
+                                                            cron+=1
                                                         else:
                                                             #Ya hay un ciclo de sistema?
                                                             if "ciclo" in variablesDeclaradas:
@@ -1105,6 +1107,9 @@ class Analizador():
                                     else:
                                         descrError= "ERROR en la linea "+str(i+1)+"=> Este Metodo solo puede ser usado con el evento de Hoja PulsarTecla, SoltarTecla"
                                         break
+                                elif token=="\tcronometro":
+                                    parametro=parametro[0:len(parametro)-1]
+                                    script=script+"crono0.play();"
                                 elif token=="\tesperar":
                                     parametro=parametro[0:len(parametro)-1]
                                     script=script+"espera("+str(parametro)+");"
@@ -1235,6 +1240,8 @@ class Analizador():
                         if linea.split("->")[1]==abiertoBloque:
                             if abiertoBloque=="cicloSistema":
                                 script=script+"});timer.set({ time : 100, autostart : true });"
+                            elif abiertoBloque=="cronometroSistema":
+                                script=script+"});crono"+str(cron-1)+".set({ time : 500, autostart : false });"
                             else:
                                 script=script+"});"
                             inicioLinea=True
