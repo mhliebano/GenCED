@@ -46,10 +46,24 @@ class Acciones:
         self.igu.eje.connect("activate",self.vistaPrevia)
         self.igu.verHtml.connect("activate",self.muestraCodigoFuente)
         
+        self.igu.exP.connect("activate",self.exportarProyecto,1)
+        
         self.igu.lienzo.connect("key-press-event",self.presionaTecla)
         #self.igu.lienzo.connect("button-press-event",self.presionaRaton)
         self.igu.lienzo.connect('title-changed',self.cambiaTitulo)
     
+    def exportarProyecto(self,widget,tipo):
+        if self.proyecto=="":
+            self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
+            return
+        if tipo==1:
+            print "Existen"+str(len(self.objetos))+" para exportar linux =)"
+            if str(os.name)== "posix":
+                conf=open(self.proyecto.ruta+"/main.py","w")
+                escrito='#!/usr/bin/env python\n# -*- coding: utf-8 -*-\nimport gtk\nimport webkit\nif __name__ == "__main__":\n\tself.paginas=[]\n\tself.paginas.append("<div>Hola MUndo</div>")\n\tself.ruta= os.path.dirname(os.path.realpath(__file__))\n\tself.window=gtk.Window(gtk.WINDOW_TOPLEVEL)\n\tself.window.set_position(gtk.WIN_POS_CENTER)\n\tself.window.set_title("Vista Previa de '+str(self.proyecto._nombre)+'")\n\tself.window.set_size_request('+str(self.proyecto.ancho)+','+str(self.proyecto.alto)+')\n\tif '+str(self.proyecto.maximizado)+'=="Verdadero":\n\t\tself.window.maximize()\n\tself.window.set_resizable(False)\n\tself.window.set_modal(True)\n\tcolor = gtk.gdk.color_parse("#ffffff")\n\tself.window.modify_bg(gtk.STATE_NORMAL, color)\n\tself.window.connect("destroy",self.destroy)\n\tself.lienzo= webkit.WebView()\n\tself.lienzo.set_view_source_mode(False)\n\tself.lienzo.load_html_string(self.paginas[0],"file://"+self.ruta+"/")\n\tself.lienzo.connect("title-changed",self.cambiaTitulo)\n\tself.window.add(self.lienzo)\n\tself.window.show_all()'
+                conf.write(escrito)
+                conf.close
+                self.igu.statusbar.push(0,"¿Ok todo listo")
     def vistaPrevia(self,widget,data=None):
         if self.proyecto=="":
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
