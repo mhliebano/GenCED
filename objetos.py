@@ -6,7 +6,7 @@ bordes={"punteado":"dotted","discontinuo":"dashed","solido":"solid","doble":"dou
 
 class ObjetoPrimario(object):
     def __init__(self):
-        self.colorFondo="Negro"
+        self.colorFondo="defecto"
         self.transparencia=1.0
         self.ancho=10
         self.alto=10
@@ -15,10 +15,23 @@ class ObjetoPrimario(object):
         self.borde="solido"
         self.colorBorde="Rojo"
         self.anchoBorde=1
-        self.sombra=False
+        self.sombra="Falso"
         self.rotar=0
         self.oculto="Falso"
+        self.etiqueta=None
+        self.tip=None
 
+    def trazaObjeto(self):
+        a=" title='"+str(self.tip)+"'etiqueta='"+str(self.etiqueta)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%; border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);"
+        if self.oculto=="Verdadero":
+             a+="display:none;"
+        if self.sombra=="Verdadero":
+            a+="box-shadow: 2px 2px 2px 2px #000000;"
+        return a
+        
+    def propiedades(self):
+        return str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.tip)+"\\"+str(self.etiqueta)
+        
 class Escena(object):
     def __init__(self,x):
         self._nombre="Hoja"+str(x)
@@ -26,13 +39,13 @@ class Escena(object):
         self.transparencia=1.0
         self.imagen=None
         self.ajusteImagen="Falso"
-        self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0}
+        self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"sonido":0}
         self.escritos=""
         self.javascript=""
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
+    def trazaObjeto(self,archivo):
         if self.imagen!=None:
             if self.ajusteImagen=="Verdadero":
                 a="<body style='background-repeat:no-repeat;background-size:100% 100%;background-image:url("+str(archivo)+"/recursos/imagenes/"+self.imagen+");opacity:"+str(self.transparencia)+";overflow:hidden'>"
@@ -42,8 +55,8 @@ class Escena(object):
             a="<body style='background-color:"+str(colores[self.colorFondo])+";opacity"+str(self.transparencia)+";overflow:hidden'>"
         return a
     
-    def retornaPropiedades(self):
-        return "p\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.imagen)+"\\"+str(self.ajusteImagen)+"\\"+str(self.cuentaObjetos["cuadro"])+","+str(self.cuentaObjetos["circulo"])+","+str(self.cuentaObjetos["triangulo"])+","+str(self.cuentaObjetos["linea"])+","+str(self.cuentaObjetos["imagen"])+","+str(self.cuentaObjetos["texto"])+"\n"
+    def propiedades(self):
+        return "p\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.imagen)+"\\"+str(self.ajusteImagen)+"\\"+str(self.cuentaObjetos["cuadro"])+","+str(self.cuentaObjetos["circulo"])+","+str(self.cuentaObjetos["triangulo"])+","+str(self.cuentaObjetos["linea"])+","+str(self.cuentaObjetos["imagen"])+","+str(self.cuentaObjetos["texto"])+","+str(self.cuentaObjetos["sonido"])+"\n"
         
     
     nombre = property(obtenerNombre)
@@ -52,15 +65,15 @@ class Cuadro(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Cuadrado"+str(x)
+    
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%; border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' onclick='send(this.id)'></div>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' ></div>"
     
-    def retornaPropiedades(self):
-        return "c\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\n"
+    def propiedades(self):
+        return "c\\"+ObjetoPrimario.propiedades(self)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -73,12 +86,12 @@ class Circulo(ObjetoPrimario):
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-border-radius:"+str(self.radio)+"px'  onclick='send(this.id)'></div>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"-webkit-border-radius:"+str(self.radio)+"px' ></div>"
+        
     
-    def retornaPropiedades(self):
-        return "o\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.radio)+"\n"
+    def propiedades(self):
+        return "o\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.radio)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -90,12 +103,11 @@ class Triangulo(ObjetoPrimario):
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='width:0;height:0;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-bottom:"+str(self.alto)+"pt solid "+str(colores[self.colorFondo])+"; border-left:"+str(self.ancho)+"pt solid transparent;    border-right: "+str(self.ancho)+"pt solid transparent;line-height: 0;font-size:0;-webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'></div>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<div id='"+str(self._nombre)+"' style='width:0;height:0;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-bottom:"+str(self.alto)+"pt solid "+str(colores[self.colorFondo])+"; border-left:"+str(self.ancho)+"pt solid transparent;    border-right: "+str(self.ancho)+"pt solid transparent;line-height: 0;font-size:0;-webkit-transform:rotate("+str(self.rotar)+"deg)'   ></div>"
     
-    def retornaPropiedades(self):
-        return "t\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.oculto)+"\\"+str(self.rotar)+"\n"
+    def propiedades(self):
+       return "t\\"+ObjetoPrimario.propiedades(self)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -103,16 +115,15 @@ class Linea(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Linea"+str(x)
-
+        self.alto=0
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<div id='"+str(self._nombre)+"' style='width:"+str(self.ancho)+"%;height:0%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-top:"+str(bordes[self.borde])+" "+str(self.anchoBorde)+"px "+str(colores[self.colorBorde])+"; -webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'></div>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' ></div>"
     
-    def retornaPropiedades(self):
-        return "l\\"+str(self.ancho)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\n"
+    def propiedades(self):
+        return "l\\"+ObjetoPrimario.propiedades(self)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -122,19 +133,16 @@ class Imagen(ObjetoPrimario):
         self._nombre="Imagen"+str(x)
         self.imagen=None
         self.clip=0
-        
+        self.rt=None
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        if self.clip==0:
-            a="<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%' style='position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'/></div>"
-        else:
-            a="<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%' style='position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);clip("+str(self.clip)+")'  onclick='send(this.id)' ></div>"
-        return a
+    def trazaObjeto(self,archivo):
+        self.rt=str(archivo)+"/recursos/imagenes/"
+        return "<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' />"
     
-    def retornaPropiedades(self):
-        return "i\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.imagen)+"\\"+str(self.clip)+"\n"
+    def propiedades(self):
+        return "i\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.imagen)+"\\"+str(self.clip)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -147,20 +155,16 @@ class Texto(ObjetoPrimario):
         self.colorTexto="Negro"
         self.fuente="Arial"
         self.alineacion="center"
-        self.parrafo="Falso"
+
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        if self.parrafo=="Falso":
-            a="<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+"'  onclick='send(this.id)' >"+str(self.texto)+"</div>"
-        else:
-            a="<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde)+"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+";overflow-y:visible;overflow-x:hidden;'   onclick='send(this.id)'>"+str(self.texto)+"</div>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+"' >"+str(self.texto)+"</div>"
     
-    def retornaPropiedades(self):
-        return "x\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.texto)+"\\"+str(self.tamanoTexto)+"\\"+str(self.colorTexto)+"\\"+str(self.fuente)+"\\"+str(self.alineacion)+"\\"+str(self.parrafo)+"\n"
-    
+    def propiedades(self):
+        return "x\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\\"+str(self.tamanoTexto)+"\\"+str(self.colorTexto)+"\\"+str(self.fuente)+"\\"+str(self.alineacion)+"\n"
+
     nombre = property(obtenerNombre)
 
 class Boton(ObjetoPrimario):
@@ -168,18 +172,16 @@ class Boton(ObjetoPrimario):
         ObjetoPrimario.__init__(self)
         self._nombre="Boton"+str(x)
         self.texto="Boton"
-        self.colorFondo="defecto"
-        self.colorBorde="defecto"
         self.alto=5
+        self.sombra="Verdadero"
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<button id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'  onclick='send(this.id)'>"+str(self.texto)+"</button>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<button id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' >"+str(self.texto)+"</button>"
     
-    def retornaPropiedades(self):
-        return "b\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.texto)+"\n"
+    def propiedades(self):
+        return "b\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -188,19 +190,16 @@ class Entrada(ObjetoPrimario):
         ObjetoPrimario.__init__(self)
         self._nombre="Entrada"+str(x)
         self.texto="Entrada de Texto"
-        self.colorFondo="defecto"
-        self.colorBorde="defecto"
         self.alto=3
         self.ancho=15
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<input id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' type='text' value='"+str(self.texto)+"'  onclick='send(this.id)'/>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<input id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' type='text' value='"+str(self.texto)+"'  />"
     
-    def retornaPropiedades(self):
-        return "e\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.texto)+"\n"
+    def propiedades(self):
+        return "e\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -209,23 +208,21 @@ class Lista(ObjetoPrimario):
         ObjetoPrimario.__init__(self)
         self._nombre="Lista"+str(x)
         self.lista=""
-        self.colorFondo="defecto"
-        self.colorBorde="defecto"
         self.alto=3
         self.ancho=15
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<select id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'   onclick='send(this.id)'>"
+    def trazaObjeto(self,archivo):
+        a="<select id='"+str(self._nombre)+"'"+str(ObjetoPrimario.trazaObjeto(self))+" '   >"
         op=self.lista.split(",")
         for i in range(len(op)):
             a=a+str("<option value='"+str(op[i])+"'>"+str(op[i])+"</option>")
         a=a+str("</select>")
         return a
     
-    def retornaPropiedades(self):
-        return "s\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.lista)+"\n"
+    def propiedades(self):
+        return "s\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.lista)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -241,13 +238,12 @@ class Check(ObjetoPrimario):
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<input id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)' type='checkbox' value='"+str(self.valor)+"'  onclick='send(this.id)'/>"
-        return a
+    def trazaObjeto(self,archivo):
+        return "<input id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' type='checkbox' value='"+str(self.valor)+"'  />"
     
-    def retornaPropiedades(self):
-        return "k\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.valor)+"\n"
-    
+    def propiedades(self):
+        return "k\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.valor)+"\n"
+        
     nombre = property(obtenerNombre)
 
 class Area(ObjetoPrimario):
@@ -262,12 +258,11 @@ class Area(ObjetoPrimario):
     def obtenerNombre(self):
         return self._nombre
     
-    def actualizaCadena(self,archivo):
-        a="<textarea id='"+str(self._nombre)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-color:"+str(colores[self.colorBorde])+"; border-width:"+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg)'  onclick='send(this.id)'>"+str(self.texto)+"</textarea>"
-        return a
+    def trazaObjeto(self,archivo):
+     return "<textarea id='"+str(self._nombre)+"'"+str(ObjetoPrimario.trazaObjeto(self))+"'  >"+str(self.texto)+"</textarea>"
     
-    def retornaPropiedades(self):
-        return "r\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.texto)+"\n"
+    def propiedades(self):
+        return "r\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\n"
     
     nombre = property(obtenerNombre)
 
@@ -299,9 +294,9 @@ class Proyecto(object):
         self.window.show_all()
     
     def cambiaTitulo(self,widget,web,titulo):
-        self.window.set_title(titulo)
-        if titulo=="Circulos0":
-            self.lienzo.load_html_string(self.paginas[1],"file://"+self.ruta+"/")
+        self.lienzo.load_html_string(self.paginas[int(titulo)],"file://"+self.ruta+"/")
+       
+       
     
     def obtenerNombre(self):
         return self._nombre    
@@ -314,6 +309,19 @@ class Proyecto(object):
     nombre = property(obtenerNombre)
     ruta=property(obtenerRuta)
 
-class Sonido(object):
-    def __init__(self):
-        pass
+class Sonido(ObjetoPrimario):
+    def __init__(self,x):
+        ObjetoPrimario.__init__(self)
+        self._nombre="Sonido"+str(x)
+        self.sonido=None
+        
+    def obtenerNombre(self):
+        return self._nombre
+    
+    def trazaObjeto(self,archivo):
+       return "<audio id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"><source src='"+str(archivo)+"/recursos/sonidos/"+str(self.sonido)+"' type='audio/ogg'   preload><source src='"+str(archivo)+"/recursos/sonidos/"+str(self.sonido)+"' type='audio/mpeg'   preload><source src='"+str(archivo)+"/recursos/sonidos/"+str(self.sonido)+"' type='audio/wav'   preload></audio>"
+    
+    def propiedades(self):
+         return "m\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.sonido)+"\n"
+    
+    nombre = property(obtenerNombre)
