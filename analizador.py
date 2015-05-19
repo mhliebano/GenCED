@@ -1109,7 +1109,14 @@ class Analizador():
                                         break
                                 elif token=="\tcronometro":
                                     parametro=parametro[0:len(parametro)-1]
-                                    script=script+"crono0.play();"
+                                    param=parametro.split(",")
+                                    if param[0]=="iniciar":
+                                        script=script+"crono"+str(param[1])+".play();"
+                                    elif param[0]=="detener":
+                                        script=script+"crono"+str(param[1])+".stop();"
+                                    else:
+                                        descrError= "ERROR en la linea "+str(i+1)+"=> Solo se admiten los parametros Iniciar y Detener"
+                                        break
                                 elif token=="\tesperar":
                                     parametro=parametro[0:len(parametro)-1]
                                     script=script+"espera("+str(parametro)+");"
