@@ -28,6 +28,7 @@ class Ventana:
         menuArchivo = gtk.Menu()
         menuEditar = gtk.Menu()
         menuProyecto=gtk.Menu()
+        menuHerramienta=gtk.Menu()
         
         menuA = gtk.MenuItem("Archivo")
         menuE = gtk.MenuItem("Editar")
@@ -84,6 +85,13 @@ class Ventana:
         self.verHtml=gtk.MenuItem("Ver Codigo Fuente")
         menuProyecto.append(self.eje)
         menuProyecto.append(self.verHtml)
+        
+        #el Menu Herramientas
+        menuH.set_submenu(menuHerramienta)
+        self.exP=gtk.MenuItem("Exportar Canaima (Linux)")
+        self.exH=gtk.MenuItem("Exportar a HTML5")
+        menuHerramienta.append(self.exP)
+        menuHerramienta.append(self.exH)
         
         menu.append(menuA)
         menu.append(menuE)
