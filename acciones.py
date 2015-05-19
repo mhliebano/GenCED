@@ -54,14 +54,16 @@ class Acciones:
         if self.proyecto=="":
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
             return
+        print "Existen"+str(len(self.objetos))
         for i in range(len(self.objetos)):
-            pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script>function send(id){}</script>"+self.objetos[0][0].javascript+"</head>"
+            print i
+            pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script type='text/javascript' src='"+self.proyecto.ruta+"/recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
             for j in range(len(self.objetos[i])):
-                pagina=pagina+str(self.objetos[i][j].actualizaCadena(self.proyecto.ruta))
+                pagina=pagina+str(self.objetos[i][j].trazaObjeto(self.proyecto.ruta))
             pagina=pagina+"</body></html>"
-            self.proyecto.paginas.append(pagina)
+            self.proyecto.paginas[i]=pagina
             pagina=""
-            
+        print len(self.proyecto.paginas)
         self.proyecto.ejecutar()
     
     def presionaTecla(self,widget,event):
@@ -311,6 +313,9 @@ class Acciones:
                     destino=self.proyecto.ruta+"/recursos/jquery.js"
                     origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.js"
                     shutil.copy(origen,destino)
+                    destino=self.proyecto.ruta+"/recursos/jquery.timer.js"
+                    origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.timer.js"
+                    shutil.copy(origen,destino)
                     #Rutina para escrubir el Archivo de configuración Inicial
                     conf=open(proyecto+"/conf/configuracion.txt","a")
                     conf.write("GCEDV1.0"+"\n")
@@ -319,7 +324,7 @@ class Acciones:
                     #Listas en Memoria de lo que contiene el proyecto hasta Ahora
                     #self.hojas.append(["hoja0"])
                     hoja=Escena(0)
-                    conf.write(hoja.retornaPropiedades())
+                    conf.write(hoja.propiedades())
                     conf.close()
                     conf=open(proyecto+"/conf/escrito0.gcd","a")
                     conf.write("[s]")
@@ -354,9 +359,10 @@ class Acciones:
         self.igu.treeview.set_model(almacen)
         self.igu.treeview.expand_all()
     
+
     def actulizaLienzo(self,tipo=0):
         marca=""
-        pagina="<html><head><title></title><script>function send(id){document.title=id}</script></head>"
+        pagina="<html><head><title></title></head>"
         if tipo==0:
             for i in range(len(self.objetos[self.puntero])):
                 if len(self.nivel)==4 and (self.nivel[3]+1)==i:
@@ -365,15 +371,19 @@ class Acciones:
                     w=float(self.objetos[self.nivel[2]][self.nivel[3]+1].ancho)+1.5
                     h=float(self.objetos[self.nivel[2]][self.nivel[3]+1].alto)+1.5
                     nm=self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
-                    marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dashed 2px red;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
-                pagina=pagina+self.objetos[self.puntero][i].actualizaCadena(self.proyecto.ruta)
+                    if self.objetos[self.nivel[2]][self.nivel[3]+1].oculto=="Falso":
+                        marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dashed 2px red;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
+                    else:
+                        marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dotted 2px black;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
+                print self.objetos[self.puntero][i]
+                pagina=pagina+self.objetos[self.puntero][i].trazaObjeto(self.proyecto.ruta)
                 pagina=pagina+marca
         elif tipo==1:
             recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
             pagina=pagina+"<img src='"+self.proyecto.ruta+"/recursos/imagenes/"+str(recurso)+"'/>"
         elif tipo==2:
             recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-            pagina=pagina+"<div><audio id='player' autoplay><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/ogg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/mpeg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/wav'   preload='none'></audio></div><h3>"+str(recurso)+"</h3><button onclick=\"document.getElementById('player').play();\">Reproducir</button><button onclick=\"document.getElementById('player').pause()\">Pausa</button><button onclick=\"document.getElementById(\'player\').volume += 0.1;\">Subir Volumen</button><button onclick=\"document.getElementById(\'player\').volume -= 0.1;\">Bajar Volumen</button>"
+            pagina=pagina+"<div><audio id='player' autoplay><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/ogg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/mpeg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/wav'   preload='none'></audio></div><h3>"+str(recurso)+"</h3><button onclick=\"document.getElementById('player').play();\">Reproducir</button><button onclick=\"document.getElementById('player').pause();document.getElementById('player').currentTime=0;\">Detener</button><button onclick=\"document.getElementById('player').pause()\">Pausa</button><button onclick=\"document.getElementById(\'player\').volume += 0.1;\">Subir Volumen</button><button onclick=\"document.getElementById(\'player\').volume -= 0.1;\">Bajar Volumen</button>"
         elif tipo==3:
             recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
             pagina=pagina+"<div><video autoplay><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/ogg' ><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/mp4'></video></div><h3>"+str(recurso)+"</h3>"
@@ -399,9 +409,9 @@ class Acciones:
                 esc.close()
                 #gp=open(self.rutaProyecto+"/app/"+str(self.objetos[fila][0].nombre),"w")
                 #gp.write(self.objetos[fila][0].nombre+"\n")
-                conf.write(self.objetos[fila][0].retornaPropiedades())
+                conf.write(self.objetos[fila][0].propiedades())
                 for i in range(len(self.objetos[fila])-1):
-                    conf.write(self.objetos[fila][i+1].retornaPropiedades())
+                    conf.write(self.objetos[fila][i+1].propiedades())
                 #gp.close()
                 #conf.write("0\\"+str(self.objetos[fila][0].nombre)+"\n")
             n=0
@@ -482,6 +492,7 @@ class Acciones:
                     if x[0]=="0":
                         hoja=Escena(len(self.objetos))
                         ind=ind+1
+                        self.proyecto.paginas.append("")
                     if x[0]=="p":
                         hoja.colorFondo=x[1]
                         hoja.transparencia=x[2]
@@ -509,6 +520,8 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="o":
                         obj=Circulo(self.objetos[ind][0].cuentaObjetos["circulo"])
@@ -525,7 +538,9 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.radio=x[13]
+                        obj.radio=x[15]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="t":
                         obj=Triangulo(self.objetos[ind][0].cuentaObjetos["triangulo"])
@@ -542,36 +557,44 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="i":
                         obj=Imagen(self.objetos[ind][0].cuentaObjetos["imagen"])
                         self.objetos[ind][0].cuentaObjetos["imagen"]=int(self.objetos[ind][0].cuentaObjetos["imagen"])+1
                         obj.transparencia=x[1]
-                        obj.ancho=x[2]
-                        obj.alto=x[3]
-                        obj.x=x[4]
-                        obj.y=x[5]
-                        obj.borde=x[6]
-                        obj.colorBorde=x[7]
-                        obj.anchoBorde=x[8]
-                        obj.sombra=x[9]
-                        obj.rotar=x[10]
-                        obj.oculto=x[11]
-                        obj.imagen=x[12]
-                        obj.clip=x[13]
+                        obj.ancho=x[3]
+                        obj.alto=x[4]
+                        obj.x=x[5]
+                        obj.y=x[6]
+                        obj.borde=x[7]
+                        obj.colorBorde=x[8]
+                        obj.anchoBorde=x[9]
+                        obj.sombra=x[10]
+                        obj.rotar=x[11]
+                        obj.oculto=x[12]
+                        obj.imagen=x[15]
+                        obj.clip=x[16]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="l":
                         obj=Linea(self.objetos[ind][0].cuentaObjetos["linea"])
                         self.objetos[ind][0].cuentaObjetos["linea"]=int(self.objetos[ind][0].cuentaObjetos["linea"])+1
-                        obj.ancho=x[1]
-                        obj.x=x[2]
-                        obj.y=x[3]
-                        obj.borde=x[4]
-                        obj.colorBorde=x[5]
-                        obj.anchoBorde=x[6]
-                        obj.rotar=x[7]
-                        obj.oculto=x[8]
+                        obj.ancho=x[3]
+                        obj.x=x[5]
+                        obj.y=x[6]
+                        obj.borde=x[7]
+                        obj.colorBorde=x[8]
+                        obj.anchoBorde=x[9]
+                        obj.sombra==x[10]
+                        obj.rotar=x[11]
+                        obj.oculto=x[12]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
+                        
                     if x[0]=="x":
                         obj=Texto(self.objetos[ind][0].cuentaObjetos["texto"])
                         self.objetos[ind][0].cuentaObjetos["texto"]=int(self.objetos[ind][0].cuentaObjetos["texto"])+1
@@ -587,12 +610,13 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.texto=x[13]
-                        obj.tamanoTexto=x[14]
-                        obj.colorTexto=x[15]
-                        obj.fuente=x[16]
-                        obj.alineacion=x[17]
-                        obj.parrafo=x[18]
+                        obj.texto=x[15]
+                        obj.tamanoTexto=x[16]
+                        obj.colorTexto=x[17]
+                        obj.fuente=x[18]
+                        obj.alineacion=x[19]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="b":
                         obj=Boton(self.objetos[ind][0].cuentaObjetos["boton"])
@@ -608,7 +632,9 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.texto=x[13]
+                        obj.texto=x[15]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="e":
                         obj=Entrada(self.objetos[ind][0].cuentaObjetos["entrada"])
@@ -624,7 +650,9 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.texto=x[13]
+                        obj.texto=x[15]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="s":
                         obj=Lista(self.objetos[ind][0].cuentaObjetos["lista"])
@@ -640,7 +668,9 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.lista=x[13]
+                        obj.lista=x[15]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="k":
                         obj=Check(self.objetos[ind][0].cuentaObjetos["check"])
@@ -656,7 +686,9 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.valor=x[13]
+                        obj.valor=x[15]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
                     if x[0]=="r":
                         obj=Area(self.objetos[ind][0].cuentaObjetos["area"])
@@ -672,7 +704,14 @@ class Acciones:
                         obj.sombra=x[10]
                         obj.rotar=x[11]
                         obj.oculto=x[12]
-                        obj.texto=x[13]
+                        obj.texto=x[15]
+                        obj.tip=x[13]
+                        obj.etiqueta=x[14]
+                        self.objetos[ind].append(obj)
+                    if x[0]=="m":
+                        obj=Sonido(self.objetos[ind][0].cuentaObjetos["sonido"])
+                        self.objetos[ind][0].cuentaObjetos["sonido"]=int(self.objetos[ind][0].cuentaObjetos["sonido"])+1
+                        obj.sonido=x[15]
                         self.objetos[ind].append(obj)
                     if x[0]=="1":
                         self.recursos[0].append(x[1])
@@ -708,6 +747,7 @@ class Acciones:
             self.igu.barraGuc.set_sensitive(True)
             self.igu.gua.set_sensitive(True)
             self.igu.guc.set_sensitive(True)
+            self.proyecto.paginas.append("")
             self.EDITADO=1
         else:
             self.igu.statusbar.push(0,"No hay proyecto para insertar Hojas")
@@ -772,12 +812,17 @@ class Acciones:
             self.objetos[self.nivel[2]][0].cuentaObjetos["area"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])+1
             self.objetos[self.puntero].append(cja)
             self.igu.statusbar.push(0,"Insertamos un Area de Edicion")
+        if data==11:
+            sonido=Sonido(self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"])
+            self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"])+1
+            self.objetos[self.puntero].append(sonido)
+            self.igu.statusbar.push(0,"Insertamos un Sonido")
         if data==13:
             obj=[]
             for i in range(len(self.objetos[self.puntero])):
                 obj.append(self.objetos[self.puntero][i])
             #self.igu.cuadroDialogoScript(obj)
-            editorEscritos=Analizador(obj)
+            editorEscritos=Analizador(obj,self.recursos)
         self.actualizaArbol()
         self.EDITADO=0
         self.igu.barraGua.set_sensitive(True)
@@ -949,7 +994,8 @@ class Acciones:
             lista.append(["Verdadero"])
             lista.append(["Falso"])
         if tipoLista==4:
-            pass
+            lista.append(["Verdadero"])
+            lista.append(["Falso"])
         if tipoLista==5:
             x=0
             lista.append([x])
@@ -974,6 +1020,10 @@ class Acciones:
             lista.append(["Courier"])
             for fila in range(len(self.recursos[3])-1):
                 lista.append([self.recursos[3][fila+1]])
+        if tipoLista==10:
+            lista.append(["None"])
+            for fila in range(len(self.recursos[1])-1):
+                lista.append([self.recursos[1][fila+1]])
         return lista
     
     def actualizaVistaPropiedades(self,objeto):
@@ -1001,6 +1051,8 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
         if objeto.__class__==Circulo:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
@@ -1016,6 +1068,8 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
             almacen.append(["radio",objeto.radio,self.llenaListas(7)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
         if objeto.__class__==Triangulo:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
@@ -1031,6 +1085,8 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
         if objeto.__class__==Linea:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
@@ -1042,6 +1098,8 @@ class Acciones:
             almacen.append(["anchoBorde",objeto.anchoBorde,self.llenaListas(5)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
         if objeto.__class__==Imagen:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
@@ -1059,6 +1117,8 @@ class Acciones:
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
             almacen.append(["imagen",objeto.imagen,self.llenaListas(8)])
             almacen.append(["clip",objeto.clip,self.llenaListas(4)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
         
         if objeto.__class__==Texto:
@@ -1080,7 +1140,8 @@ class Acciones:
             almacen.append(["colorTexto",objeto.colorTexto,self.llenaListas(1)])
             almacen.append(["fuente",objeto.fuente,self.llenaListas(9)])
             almacen.append(["alineacion",objeto.alineacion,self.llenaListas(4)])
-            almacen.append(["parrafo",objeto.parrafo,self.llenaListas(3)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
         if objeto.__class__==Boton:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
@@ -1096,6 +1157,8 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
        
         if objeto.__class__==Entrada:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
@@ -1111,7 +1174,9 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
-        
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
+            
         if objeto.__class__==Lista:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
             almacen.append(["lista",objeto.lista,self.llenaListas(4)])
@@ -1126,7 +1191,9 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
-        
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
+            
         if objeto.__class__==Check:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
             almacen.append(["valor",objeto.valor,self.llenaListas(4)])
@@ -1141,7 +1208,9 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
-        
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
+            
         if objeto.__class__==Area:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
             almacen.append(["texto",objeto.texto,self.llenaListas(4)])
@@ -1156,6 +1225,12 @@ class Acciones:
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
             almacen.append(["rotar",objeto.rotar,self.llenaListas(7)])
             almacen.append(["oculto",objeto.oculto,self.llenaListas(3)])
+            almacen.append(["tip",objeto.tip,self.llenaListas(4)])
+            almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
+        
+        if objeto.__class__==Sonido:
+            almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
+            almacen.append(["sonido",objeto.sonido,self.llenaListas(10)])
         
         if objeto.__class__==Proyecto:
             almacen.append(["ruta",objeto.ruta,self.llenaListas(4)])
@@ -1163,7 +1238,9 @@ class Acciones:
             almacen.append(["ancho",objeto.ancho,self.llenaListas(4)])
             almacen.append(["alto",objeto.alto,self.llenaListas(4)])
             almacen.append(["maximizado",objeto.maximizado,self.llenaListas(3)])
-            
+        
+        
+        
         self.igu.panelPropiedades.set_model(almacen)
         self.actulizaLienzo()
     
@@ -1179,6 +1256,7 @@ class Acciones:
                     if self.nivel[1]==0:
                         print "Eliminar la Hoja"+str(self.puntero)
                         del self.objetos[self.puntero]
+                        del self.proyecto.paginas[self.puntero]
                         self.actualizaArbol()
                 elif len(self.nivel)==4:
                     if self.nivel[1]==0:
@@ -1210,7 +1288,7 @@ class Acciones:
         self.igu.barraGuc.set_sensitive(True)
         self.igu.gua.set_sensitive(True)
         self.igu.guc.set_sensitive(True)
-        texto ="Se ha Eliminado "+str(recurso) #+str(modelo[fil][0]) + ", " + str(modelo[fil][1])+"("+str(self.nodo)+")"
+        texto ="Se ha Eliminado "+str(recurso)
         self.igu.statusbar.push(0,texto)
     
     def _cambiaAtributo( self,widget, fila, valor, columna):
