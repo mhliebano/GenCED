@@ -3,7 +3,7 @@
 import sys
 import gtk
 import shutil
-import os
+import os, stat
 from objetos import *
 from analizador import *
 class Acciones:
@@ -47,6 +47,7 @@ class Acciones:
         self.igu.verHtml.connect("activate",self.muestraCodigoFuente)
         
         self.igu.exP.connect("activate",self.exportarProyecto,1)
+        self.igu.exH.connect("activate",self.exportarProyecto,2)
         
         self.igu.lienzo.connect("key-press-event",self.presionaTecla)
         #self.igu.lienzo.connect("button-press-event",self.presionaRaton)
@@ -57,13 +58,37 @@ class Acciones:
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
             return
         if tipo==1:
-            print "Existen"+str(len(self.objetos))+" para exportar linux =)"
             if str(os.name)== "posix":
-                conf=open(self.proyecto.ruta+"/main.py","w")
-                escrito='#!/usr/bin/env python\n# -*- coding: utf-8 -*-\nimport gtk\nimport webkit\nif __name__ == "__main__":\n\tself.paginas=[]\n\tself.paginas.append("<div>Hola MUndo</div>")\n\tself.ruta= os.path.dirname(os.path.realpath(__file__))\n\tself.window=gtk.Window(gtk.WINDOW_TOPLEVEL)\n\tself.window.set_position(gtk.WIN_POS_CENTER)\n\tself.window.set_title("Vista Previa de '+str(self.proyecto._nombre)+'")\n\tself.window.set_size_request('+str(self.proyecto.ancho)+','+str(self.proyecto.alto)+')\n\tif '+str(self.proyecto.maximizado)+'=="Verdadero":\n\t\tself.window.maximize()\n\tself.window.set_resizable(False)\n\tself.window.set_modal(True)\n\tcolor = gtk.gdk.color_parse("#ffffff")\n\tself.window.modify_bg(gtk.STATE_NORMAL, color)\n\tself.window.connect("destroy",self.destroy)\n\tself.lienzo= webkit.WebView()\n\tself.lienzo.set_view_source_mode(False)\n\tself.lienzo.load_html_string(self.paginas[0],"file://"+self.ruta+"/")\n\tself.lienzo.connect("title-changed",self.cambiaTitulo)\n\tself.window.add(self.lienzo)\n\tself.window.show_all()'
+                conf=open(self.proyecto.ruta+"/main","w")
+                escrito='#!/usr/bin/env python\n# -*- coding: utf-8 -*-\nimport gtk\nimport webkit\nimport os\nruta= os.path.dirname(os.path.realpath(__file__))\npaginas=[]\ndef destroy(self):\n\tgtk.main_quit()\ndef cambiaTitulo(self,widget,titulo):\n\tself.load_html_string(paginas[int(titulo)],"file://"+ruta+"/")\nif __name__ == "__main__":\n'
+                for i in range(len(self.objetos)):
+                    pagina="<html><head><script src='\"+str(ruta)+\"/recursos/jquery.js'></script><script type='text/javascript' src='\"+str(ruta)+\"/recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
+                    for j in range(len(self.objetos[i])):
+                        pagina=pagina+str(self.objetos[i][j].trazaObjeto("\"+str(ruta)+\""))
+                    pagina=pagina+"</body></html>"
+                    escrito+='\tpaginas.append("'+str(pagina)+'")\n'
+                    pagina=""
+                escrito+='\twindow=gtk.Window(gtk.WINDOW_TOPLEVEL)\n\twindow.set_position(gtk.WIN_POS_CENTER)\n\twindow.set_title("Vista Previa de '+str(self.proyecto._nombre)+'")\n\twindow.set_size_request('+str(self.proyecto.ancho)+','+str(self.proyecto.alto)+')\n\tif "'+str(self.proyecto.maximizado)+'"=="Verdadero":\n\t\twindow.maximize()\n\twindow.set_resizable(False)\n\twindow.set_modal(True)\n\tcolor = gtk.gdk.color_parse("#ffffff")\n\twindow.modify_bg(gtk.STATE_NORMAL, color)\n\twindow.connect("destroy",destroy)\n\tlienzo= webkit.WebView()\n\tlienzo.set_view_source_mode(False)\n\tlienzo.load_html_string(paginas[0],"file://"+ruta+"/")\n\tlienzo.connect("title-changed",cambiaTitulo)\n\twindow.add(lienzo)\n\twindow.show_all()\n\tgtk.main()'
                 conf.write(escrito)
                 conf.close
-                self.igu.statusbar.push(0,"¿Ok todo listo")
+                os.chmod(self.proyecto.ruta+"/main",stat.S_IRWXU)
+                self.igu.statusbar.push(0,"Ok todo listo")
+        elif tipo==2:
+            if str(os.name)== "posix":
+                os.mkdir(self.proyecto.ruta+"/html")
+                for i in range(len(self.objetos)):
+                    conf=open(self.proyecto.ruta+"/html/pagina"+str(i)+".html","w")
+                    pagina="<html><head><script src='../recursos/jquery.js'></script><script type='text/javascript' src='../recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
+                    for j in range(len(self.objetos[i])):
+                        pagina=pagina+str(self.objetos[i][j].trazaObjeto("../"))
+                    pagina=pagina+"</body></html>"
+                    conf.write(pagina)
+                    conf.close
+                    pagina=""
+                self.igu.statusbar.push(0,"Ok todo listo")
+        else:
+            self.igu.statusbar.push(0,"Tipo No Reconocido")
+    
     def vistaPrevia(self,widget,data=None):
         if self.proyecto=="":
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
