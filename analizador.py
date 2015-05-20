@@ -191,7 +191,7 @@ class Analizador():
         condicional=""
         teclas=False
         cierraTecla=False
-        descrError="Ok todo Bien"
+        descrError="Ok"
         cron=0
         script="$( document ).ready(function() { wh= parseInt(document.body.clientWidth);hh= parseInt(document.body.clientHeight);"
         for i in range(lineas-1):
@@ -1088,7 +1088,7 @@ class Analizador():
                                         script=script+"document.getElementById('"+parametro+"').play();"
                                 elif token=="\thoja":
                                     parametro=parametro[0:len(parametro)-1]
-                                    script=script+"$(document).prop('title','"+parametro+"');"
+                                    script=script+"$(document).prop('title','"+parametro+"');window.location.href='pagina"+str(parametro)+".html';"
                                 elif token=="\tescribirDato":
                                     param=parametro.split(",")
                                     if len(param)==2:
@@ -1115,7 +1115,7 @@ class Analizador():
                                     elif param[0]=="detener":
                                         script=script+"crono"+str(param[1])+".stop();"
                                     else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Solo se admiten los parametros Iniciar y Detener"
+                                        descrError= "ERROR en la linea "+str(i+1)+"=> Solo se admiten los parametros iniciar y detener"
                                         break
                                 elif token=="\tesperar":
                                     parametro=parametro[0:len(parametro)-1]
@@ -1266,7 +1266,10 @@ class Analizador():
             else:
                 linea=""
                 continue
-        script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}});"
+        if descrError=="Ok":
+            script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}});"
+        else:
+            script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}alert('"+str(descrError)+"')});"
         obje[0].javascript=""
         obje[0].escritos=""
         print script
