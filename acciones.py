@@ -321,7 +321,11 @@ class Acciones:
             self.igu.statusbar.push(0, "Imposible Pegar Fuera de Una hoja")
 
     def nuevoProyecto(self,widget=None,data=None):
+        #Si estamos en linux =)
         if str(os.name)== "posix":
+            if self.proyecto!="":
+                self.igu.cuadroMensajes("Proyecto Abierto","Ya hay un Proyecto abierto\n por favor cierrelo antes de crear otro",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
+                return
             #print os.getcwd() muestra la ruta donde se ejecuta el main
             ruta= os.getenv("HOME") #saca la ruta del home del usuario
             dialogo = gtk.FileChooserDialog(title="Crear Nuevo Proyecto",action=gtk.FILE_CHOOSER_ACTION_SAVE,
@@ -329,7 +333,6 @@ class Acciones:
             resp=dialogo.run()
             if resp==gtk.RESPONSE_OK:
                 proyecto=str(dialogo.get_filename())
-                print proyecto
                 if os.path.exists(proyecto):
                     md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ya existe un proyecto con este nombre")
                     md.set_title("Error de Creacion de Proyecto")
@@ -338,36 +341,67 @@ class Acciones:
                     dialogo.destroy()
                     self.nuevoProyecto()
                 else:
-                    #print widget
-                    #return 0
                     nmb=proyecto.split("/")
                     self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto)
-                    os.mkdir(proyecto)
-                    os.mkdir(proyecto+"/recursos/")
-                    os.mkdir(proyecto+"/recursos/imagenes")
-                    os.mkdir(proyecto+"/recursos/sonidos")
-                    os.mkdir(proyecto+"/recursos/videos")
-                    os.mkdir(proyecto+"/recursos/archivos")
-                    os.mkdir(proyecto+"/conf")
-                    destino=self.proyecto.ruta+"/recursos/jquery.js"
-                    origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.js"
-                    shutil.copy(origen,destino)
-                    destino=self.proyecto.ruta+"/recursos/jquery.timer.js"
-                    origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.timer.js"
-                    shutil.copy(origen,destino)
-                    #Rutina para escrubir el Archivo de configuración Inicial
-                    conf=open(proyecto+"/conf/configuracion.txt","a")
-                    conf.write("GCEDV1.0"+"\n")
-                    conf.write("0\Hoja0\n")
-                    
-                    #Listas en Memoria de lo que contiene el proyecto hasta Ahora
-                    #self.hojas.append(["hoja0"])
-                    hoja=Escena(0)
-                    conf.write(hoja.propiedades())
-                    conf.close()
-                    conf=open(proyecto+"/conf/escrito0.gcd","a")
-                    conf.write("[s]")
-                    conf.close()
+                    try: #trato de crear las carpetas en el home del usuario
+                        os.mkdir(proyecto)
+                        os.mkdir(proyecto+"/recursos/")
+                        os.mkdir(proyecto+"/recursos/imagenes")
+                        os.mkdir(proyecto+"/recursos/sonidos")
+                        os.mkdir(proyecto+"/recursos/videos")
+                        os.mkdir(proyecto+"/recursos/archivos")
+                        os.mkdir(proyecto+"/conf")
+                    except:
+                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error al intentar crear los directorios")
+                        md.set_title("Error de Creacion Directorios")
+                        md.run()
+                        md.destroy()
+                        dialogo.destroy()
+                        self.igu.statusbar.push("Ocurrio un error al crear los directorios")
+                        return
+                    try: #trato de copiar los archivos js a las carpetas del proyecto
+                        destino=self.proyecto.ruta+"/recursos/jquery.js"
+                        origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.js"
+                        shutil.copy(origen,destino)
+                        destino=self.proyecto.ruta+"/recursos/jquery.timer.js"
+                        origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.timer.js"
+                        shutil.copy(origen,destino)
+                    except:
+                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error al intentar copiar los archivos javascript")
+                        md.set_title("Error de Copiado de Archivos")
+                        md.run()
+                        md.destroy()
+                        dialogo.destroy()
+                        self.igu.statusbar.push("Ocurrio un error al copiar los archivos de Javascript")
+                        return
+                    try: #Trato de escribir el archivo de configuracion del proyecto
+                        conf=open(proyecto+"/conf/configuracion.txt","a")
+                        conf.write("GCEDV1.0"+"\n")
+                        conf.write("0\Hoja0\n")
+                        #Listas en Memoria de lo que contiene el proyecto hasta Ahora
+                        hoja=Escena(0)
+                        conf.write(hoja.propiedades())
+                        conf.close()
+                    except:
+                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error crear el archivo de configuracion")
+                        md.set_title("Error de Escritura de Archivos")
+                        md.run()
+                        md.destroy()
+                        dialogo.destroy()
+                        self.igu.statusbar.push("Ocurrio un error crear el archivo de configuracion")
+                        return
+                    try: #Trato de escribir el archivo de escritos del proyecto
+                        conf=open(proyecto+"/conf/escrito0.gcd","a")
+                        conf.write("[s]")
+                        conf.close()
+                    except:
+                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error crear el archivo de escritos")
+                        md.set_title("Error de Escritura de Archivos")
+                        md.run()
+                        md.destroy()
+                        dialogo.destroy()
+                        self.igu.statusbar.push("Ocurrio un error crear el archivo de escritos")
+                        return
                     self.objetos.append([hoja])
                     self.recursos.append(["imagenes"])
                     self.recursos.append(["sonidos"])
@@ -379,7 +413,9 @@ class Acciones:
                     self.igu.barraSonidoNuevo.set_sensitive(True)
                     self.igu.barraVideoNuevo.set_sensitive(True)
                     self.igu.barraArchivoNuevo.set_sensitive(True)
+                    self.igu.cer.set_sensitive(True)
             dialogo.destroy()
+            self.igu.statusbar.push("Se ha creado con Éxito el proyecto")
     
     def actualizaArbol(self):
         almacen = gtk.TreeStore(str,str)
@@ -464,6 +500,7 @@ class Acciones:
             self.igu.barraGuc.set_sensitive(False)
             self.igu.gua.set_sensitive(False)
             self.igu.guc.set_sensitive(False)
+   
     def cerrarProyecto(self,widget=None,data=None):
         self.proyecto=""
         del self.recursos[:]
@@ -495,8 +532,8 @@ class Acciones:
         self.igu.barraSonidoNuevo.set_sensitive(False)
         self.igu.barraVideoNuevo.set_sensitive(False)
         self.igu.barraArchivoNuevo.set_sensitive(False)
-        
         self.igu.hojaBienvenida()
+        self.igu.statusbar.push(0,"Proyecto Cerrado")
         
     def abrirProyecto(self,widget=None,data=None):
         if self.proyecto!="":
