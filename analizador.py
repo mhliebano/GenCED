@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import glib
 import gtk
 import pango
 import re
@@ -9,15 +10,15 @@ class Analizador():
     def __init__(self,objetos,recursos):
         eventosEscena=["alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
-        window=gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_position(gtk.WIN_POS_CENTER)
-        window.set_title("editor de escritos")
-        window.set_size_request(600,600)
-        window.set_resizable(False)
-        window.set_modal(True)
+        self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_position(gtk.WIN_POS_CENTER)
+        self.window.set_title("editor de escritos")
+        self.window.set_size_request(600,600)
+        self.window.set_resizable(False)
+        self.window.set_modal(True)
         self.barraEstado = gtk.Statusbar()
         color = gtk.gdk.color_parse('#ffffff')
-        window.modify_bg(gtk.STATE_NORMAL, color)
+        self.window.modify_bg(gtk.STATE_NORMAL, color)
         barra = gtk.Toolbar()
         barra.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         barra.set_style(gtk.TOOLBAR_ICONS)
@@ -115,8 +116,12 @@ class Analizador():
         caja.pack_start(sep,False,True)
         caja.pack_start(txtScript,True)
         caja.pack_end(self.barraEstado,False,True)
-        window.add(caja)
-        window.show_all()
+        self.window.connect("delete_event",self.cerrar)
+        self.window.add(caja)
+        self.window.show_all()
+
+    def cerrar(self,widget,data=None):
+        return True
 
     def _pintaNumeros(self,window,event,text_buffer,text_view):
         bounds = text_buffer.get_bounds()
@@ -1268,11 +1273,13 @@ class Analizador():
                 continue
         if descrError=="Ok":
             script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}});"
+            self.window.destroy()
         else:
             script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}alert('"+str(descrError)+"')});"
+            self.barraEstado.push(0,descrError)
         obje[0].javascript=""
         obje[0].escritos=""
         print script
         obje[0].javascript="<script>"+script+"</script>"
         obje[0].escritos=data.get_text(*data.get_bounds())
-        self.barraEstado.push(0,descrError)
+        
