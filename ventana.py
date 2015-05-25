@@ -406,5 +406,4 @@ class Ventana:
     
     def hojaBienvenida(self,widget=None,data=None):
         FONDO="<html><head></head><body style='background:url("+ruta+"/iconos/alma.png)'><h1 style='color:#006400;text-shadow: 5px 5px 5px #FF4500;top:0%;position:absolute'>Generador de Contenidos Educativos Digitales</h1><h2 style='position: absolute;top:5%;text-align:center'>GenCED</h2><audio source src='"+str(ruta)+"/recursos/sonidos/HARP1.ogg' type='audio/ogg'   preload autoplay></audio></body></html>"
-        print ruta
         self.lienzo.load_html_string(FONDO,"file://"+ruta)
