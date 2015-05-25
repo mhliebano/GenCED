@@ -165,7 +165,6 @@ class Acciones:
             for i in range(len(self.objetos[self.puntero])):
                 if self.objetos[self.puntero][i].nombre==variables[1]:
                     self.actualizaVistaPropiedades(self.objetos[self.puntero][i])
-                    #widget.execute_script("select('"+titulo+"')")
                     self.igu.treeview.set_cursor((0,0,self.puntero,i-1))
                     break
         elif variables[0]=='2':
