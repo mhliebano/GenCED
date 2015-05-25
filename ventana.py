@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import webkit
 import gtk
+import glib
 import os
 ruta= os.path.dirname(os.path.realpath(__file__))
 
@@ -29,6 +30,7 @@ class Ventana:
         menuEditar = gtk.Menu()
         menuProyecto=gtk.Menu()
         menuHerramienta=gtk.Menu()
+        menuAplicacion=gtk.Menu()
         
         menuA = gtk.MenuItem("Archivo")
         menuE = gtk.MenuItem("Editar")
@@ -88,10 +90,16 @@ class Ventana:
         
         #el Menu Herramientas
         menuH.set_submenu(menuHerramienta)
+        self.gaI=gtk.MenuItem("Galeria de Imagenes")
+        menuHerramienta.append(self.gaI)
+        
+        #el menu aplicacion
+        menuL.set_submenu(menuAplicacion)
         self.exP=gtk.MenuItem("Exportar Canaima (Linux)")
         self.exH=gtk.MenuItem("Exportar a HTML5")
-        menuHerramienta.append(self.exP)
-        menuHerramienta.append(self.exH)
+        menuAplicacion.append(self.exP)
+        menuAplicacion.append(self.exH)
+        
         
         menu.append(menuA)
         menu.append(menuE)
@@ -397,6 +405,6 @@ class Ventana:
         gtk.main()
     
     def hojaBienvenida(self,widget=None,data=None):
-        FONDO="<html><head></head><body style='background:url("+ruta+"/iconos/alma.png)'><h1 style='color:#006400;text-shadow: 5px 5px 5px #FF4500;top:0%;position:absolute'>Generador de Contenidos Educativos Digitales</h1><h2 style='position: absolute;top:5%;text-align:center'>GenCED</h2></body></html>"
+        FONDO="<html><head></head><body style='background:url("+ruta+"/iconos/alma.png)'><h1 style='color:#006400;text-shadow: 5px 5px 5px #FF4500;top:0%;position:absolute'>Generador de Contenidos Educativos Digitales</h1><h2 style='position: absolute;top:5%;text-align:center'>GenCED</h2><audio source src='"+str(ruta)+"/recursos/sonidos/HARP1.ogg' type='audio/ogg'   preload autoplay></audio></body></html>"
         print ruta
         self.lienzo.load_html_string(FONDO,"file://"+ruta)
