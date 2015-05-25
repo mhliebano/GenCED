@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
 import sys
-import gtk
+import glib,gtk
 import shutil
 import os, stat
 from objetos import *
@@ -49,10 +48,29 @@ class Acciones:
         self.igu.exP.connect("activate",self.exportarProyecto,1)
         self.igu.exH.connect("activate",self.exportarProyecto,2)
         
+        self.igu.gaI.connect("activate",self.verImagenes,None)
+        
         self.igu.lienzo.connect("key-press-event",self.presionaTecla)
         #self.igu.lienzo.connect("button-press-event",self.presionaRaton)
         self.igu.lienzo.connect('title-changed',self.cambiaTitulo)
     
+    def verImagenes(self,widget,accion):
+        if accion==None:
+            pagina="<html><head><script>function cf(id){document.title=id}</script></head><body><h1>Categorias de Imagenes</h1>"
+            for (path,directory,archivos) in os.walk("./recursos/imagenes"):
+                categoria=path.split("/")
+                if len(categoria)>3:
+                    pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:2%;float:left;text-align:center'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/iconos/carpeta.png' style='display:block;width:90%;height;65%' onclick='cf(this.id)' id='0+"+str(categoria[3])+"'/>"+str(categoria[3])+"</div>"
+            pagina+="</body></html>"
+        else:
+            pagina="<html><head><script>function cf(id){document.title=id}</script></head><body><h1>Categorias de Imagenes: "+str(accion)+"</h1>"
+            i=0
+            for (path,ficheros,archivos) in os.walk("./recursos/imagenes/"+str(accion)):
+                for (imagen) in archivos:
+                    pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:2%;float:left;text-align:center;border:1px solid #000000'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(accion)+"/"+str(imagen)+"' style='display:block;width:80%;height:65%' onclick='cf(this.id)' id='2+"+accion+"+"+imagen+"'/>"+imagen+"</div>"
+            pagina+="</body></html>"
+        self.igu.lienzo.load_html_string(pagina,"file://"+os.path.dirname(os.path.realpath(__file__))+"/")
+        
     def exportarProyecto(self,widget,tipo):
         if self.proyecto=="":
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
@@ -93,16 +111,13 @@ class Acciones:
         if self.proyecto=="":
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
             return
-        print "Existen"+str(len(self.objetos))
         for i in range(len(self.objetos)):
-            print i
             pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script type='text/javascript' src='"+self.proyecto.ruta+"/recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
             for j in range(len(self.objetos[i])):
                 pagina=pagina+str(self.objetos[i][j].trazaObjeto(self.proyecto.ruta))
             pagina=pagina+"</body></html>"
             self.proyecto.paginas[i]=pagina
             pagina=""
-        print len(self.proyecto.paginas)
         self.proyecto.ejecutar()
     
     def presionaTecla(self,widget,event):
@@ -143,12 +158,26 @@ class Acciones:
         body.onmouseover = self._mouse_over_event"""
     
     def cambiaTitulo(self,widget,web,titulo):
-        for i in range(len(self.objetos[self.puntero])):
-           if self.objetos[self.puntero][i].nombre==titulo:
-               self.actualizaVistaPropiedades(self.objetos[self.puntero][i])
-               #widget.execute_script("select('"+titulo+"')")
-               self.igu.treeview.set_cursor((0,0,self.puntero,i-1))
-               break
+        variables=titulo.split("+")
+        if variables[0]=='0':
+            self.verImagenes(widget,variables[1])
+        elif variables[0]=='1':
+            for i in range(len(self.objetos[self.puntero])):
+                if self.objetos[self.puntero][i].nombre==variables[1]:
+                    self.actualizaVistaPropiedades(self.objetos[self.puntero][i])
+                    #widget.execute_script("select('"+titulo+"')")
+                    self.igu.treeview.set_cursor((0,0,self.puntero,i-1))
+                    break
+        elif variables[0]=='2':
+            pagina="<html><head><title></title></head>"
+            pagina=pagina+"<img src='"+os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(variables[1])+"/"+str(variables[2])+"'/>"
+            if self.proyecto!="":
+                pagina+="<button>Insertar al Proyecto</button>"
+                
+            pagina=pagina+"</body></html>"
+            self.igu.lienzo.load_html_string(pagina,"file://"+os.path.dirname(os.path.realpath(__file__))+"/")
+        else:
+            self.igu.statusbar.push(0,"No se que hacer!!!");
         
     def muestraCodigoFuente(self,widget=None):
         print self.igu.lienzo.get_view_source_mode()
@@ -414,8 +443,11 @@ class Acciones:
                     self.igu.barraVideoNuevo.set_sensitive(True)
                     self.igu.barraArchivoNuevo.set_sensitive(True)
                     self.igu.cer.set_sensitive(True)
-            dialogo.destroy()
-            self.igu.statusbar.push("Se ha creado con Éxito el proyecto")
+                    self.igu.statusbar.push(0,"Se ha creado con Éxito el proyecto")
+            else:
+                dialogo.destroy()
+                self.igu.statusbar.push(0,"Se ha cancelado la creación del proyecto")
+            
     
     def actualizaArbol(self):
         almacen = gtk.TreeStore(str,str)
@@ -437,7 +469,7 @@ class Acciones:
 
     def actulizaLienzo(self,tipo=0):
         marca=""
-        pagina="<html><head><title></title></head>"
+        pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script>$(document).ready(function(){$('.tiempoDiseno').click(function(){document.title='1+'+$(this).attr('id');})})</script></head>"
         if tipo==0:
             for i in range(len(self.objetos[self.puntero])):
                 if len(self.nivel)==4 and (self.nivel[3]+1)==i:
