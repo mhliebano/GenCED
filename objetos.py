@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import glib
 import gtk
 import webkit
 colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
@@ -22,7 +23,7 @@ class ObjetoPrimario(object):
         self.tip=None
 
     def trazaObjeto(self):
-        a=" title='"+str(self.tip)+"'etiqueta='"+str(self.etiqueta)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%; border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);"
+        a="class='tiempoDiseno' title='"+str(self.tip)+"'etiqueta='"+str(self.etiqueta)+"' style='background-color:"+str(colores[self.colorFondo])+";width:"+str(self.ancho)+"%;height:"+str(self.alto)+"%;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%; border-style:"+str(bordes[self.borde])+";border-color:"+str(colores[self.colorBorde])+"; border-width: "+str(self.anchoBorde) +"pt;-webkit-transform:rotate("+str(self.rotar)+"deg);"
         if self.oculto=="Verdadero":
              a+="display:none;"
         if self.sombra=="Verdadero":
