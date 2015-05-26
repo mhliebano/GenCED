@@ -198,6 +198,7 @@ class Analizador():
         cierraTecla=False
         descrError="Ok"
         cron=0
+        t=0
         script="$( document ).ready(function() { wh= parseInt(document.body.clientWidth);hh= parseInt(document.body.clientHeight);"
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
@@ -287,6 +288,7 @@ class Analizador():
                                                         #Que tipo evento de sistema es?
                                                         if token==eventosValidos[0]:
                                                             #print "Ok evento de sistema tipo cronometro"
+                                                            t=nombre[8:-2]
                                                             script=script+ "var crono"+str(cron)+" = $.timer(function() {"
                                                             abiertoBloque="cronometroSistema"
                                                             cron+=1
@@ -1113,12 +1115,14 @@ class Analizador():
                                         descrError= "ERROR en la linea "+str(i+1)+"=> Este Metodo solo puede ser usado con el evento de Hoja PulsarTecla, SoltarTecla"
                                         break
                                 elif token=="\tcronometro":
-                                    parametro=parametro[0:len(parametro)-1]
                                     param=parametro.split(",")
+                                    valor=param[1]
+                                    valor=valor[0:len(valor)-1]
+                                    print valor
                                     if param[0]=="iniciar":
-                                        script=script+"crono"+str(param[1])+".play();"
+                                        script=script+"crono"+str(valor)+".play();"
                                     elif param[0]=="detener":
-                                        script=script+"crono"+str(param[1])+".stop();"
+                                        script=script+"crono"+str(valor)+".stop();"
                                     else:
                                         descrError= "ERROR en la linea "+str(i+1)+"=> Solo se admiten los parametros iniciar y detener"
                                         break
@@ -1253,7 +1257,8 @@ class Analizador():
                             if abiertoBloque=="cicloSistema":
                                 script=script+"});timer.set({ time : 100, autostart : true });"
                             elif abiertoBloque=="cronometroSistema":
-                                script=script+"});crono"+str(cron-1)+".set({ time : 500, autostart : false });"
+                                script=script+"});crono"+str(cron-1)+".set({ time : "+str(t)+", autostart : false });"
+                                t=0
                             else:
                                 script=script+"});"
                             inicioLinea=True
@@ -1276,7 +1281,8 @@ class Analizador():
             self.window.destroy()
         else:
             script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}alert('"+str(descrError)+"')});"
-            self.barraEstado.push(0,descrError)
+            self.barraEstado.pus(0,str(descrError))
+            
         obje[0].javascript=""
         obje[0].escritos=""
         print script
