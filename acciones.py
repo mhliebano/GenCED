@@ -171,10 +171,23 @@ class Acciones:
             pagina="<html><head><title></title></head>"
             pagina=pagina+"<img src='"+os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(variables[1])+"/"+str(variables[2])+"'/>"
             if self.proyecto!="":
-                pagina+="<button>Insertar al Proyecto</button>"
+                pagina+="<button onclick='document.title=\"3+"+str(variables[1])+"/"+str(variables[2])+"\"'>Insertar al Proyecto</button>"
                 
             pagina=pagina+"</body></html>"
             self.igu.lienzo.load_html_string(pagina,"file://"+os.path.dirname(os.path.realpath(__file__))+"/")
+        elif variables[0]=='3':
+            if self.proyecto=="":
+                self.igu.statusbar.push(0,"No hay Proyecto Abierto");
+            else:
+                archivo=variables[1]
+                par=variables[1].split("/")[1]
+                destino=self.proyecto.ruta+"/recursos/imagenes/"+par
+                origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(variables[1])
+                shutil.copy(origen,destino)
+                self.recursos[0].append(par)
+                self.actualizaArbol()
+                self.guardarProyecto()
+                self.igu.statusbar.push(0,"Insertada la Imagen "+str(par));
         else:
             self.igu.statusbar.push(0,"No se que hacer!!!");
         
