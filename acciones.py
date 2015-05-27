@@ -47,12 +47,20 @@ class Acciones:
         
         self.igu.exP.connect("activate",self.exportarProyecto,1)
         self.igu.exH.connect("activate",self.exportarProyecto,2)
+        self.igu.imF.connect("activate",self.importarFuente)
+        self.igu.imE.connect("activate",self.importarExportado)
         
         self.igu.gaI.connect("activate",self.verImagenes,None)
         
         self.igu.lienzo.connect("key-press-event",self.presionaTecla)
-        #self.igu.lienzo.connect("button-press-event",self.presionaRaton)
+        self.igu.lienzo.connect("button-press-event",self.presionaRaton)
         self.igu.lienzo.connect('title-changed',self.cambiaTitulo)
+    
+    def importarFuente(self,widget,data=None):
+        pass
+    
+    def importarImportado(self,widget,data=None):
+        pass
     
     def verImagenes(self,widget,accion):
         if accion==None:
@@ -138,10 +146,10 @@ class Acciones:
     def presionaRaton(self,widget,event):
         assert event.type == gtk.gdk.BUTTON_PRESS
         self.igu.statusbar.push(0, 'Clicked at x={0}, y={0}'.format(event.x, event.y))
-        self.igu.cuadroDialogoScript()
+        #self.igu.cuadroDialogoScript()
         #self.igu.lienzo.execute_script('tag= window.document.element.nodeName;alert("El elemento selecionado ha sido " + tag);')
         
-        """doc = widget.get_dom_document()
+        """"doc = widget.get_dom_document()
         nodes = doc.getElementsByTagName('body')
         body = nodes.item(0)
 
