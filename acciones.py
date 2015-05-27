@@ -59,7 +59,7 @@ class Acciones:
     def importarFuente(self,widget,data=None):
         pass
     
-    def importarImportado(self,widget,data=None):
+    def importarExportado(self,widget,data=None):
         pass
     
     def verImagenes(self,widget,accion):

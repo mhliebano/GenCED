@@ -429,7 +429,7 @@ class Analizador():
                                         funcionAbierta=True
                                         inicioLinea=False
                                 else:
-                                     descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
+                                    descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
                                     break
                             #ninguna de las anteriores?
                             else:
