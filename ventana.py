@@ -91,7 +91,11 @@ class Ventana:
         #el Menu Herramientas
         menuH.set_submenu(menuHerramienta)
         self.gaI=gtk.MenuItem("Galeria de Imagenes")
+        self.imF=gtk.MenuItem("Importar desde Proyecto Fuente")
+        self.imE=gtk.MenuItem("Importar desde Proyecto Exportado")
         menuHerramienta.append(self.gaI)
+        menuHerramienta.append(self.imF)
+        menuHerramienta.append(self.imE)
         
         #el menu aplicacion
         menuL.set_submenu(menuAplicacion)
@@ -368,9 +372,7 @@ class Ventana:
 
         #activamos las funciones de los botones de la barra
         self.quittb.connect("clicked", self.salir,2)
-        
-        
-        
+ 
         #mostramos la ventana
         self.window.add(tabla)
         self.window.show_all()
