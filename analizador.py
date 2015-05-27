@@ -180,6 +180,7 @@ class Analizador():
         elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro"]
         variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
+        funcionesDeclaradas=[]
         colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
         bordes={"punteado":"dotted","discontinuo":"dashed","solido":"solid","doble":"double","acanalado":"groove","corrugado":"ridge","relieve bajo":"inset","relieve alto":"outset"}
         atributosOb={"colorFondo":"background-color","transparencia":"transparency","ancho":"width","alto":"height","x":"left","y":"top","borde":"border-style","colorBorde":"borderTopColor","anchoBorde":"border-width","sombra":"shadow","rotar":"-webkit-transform:rotate","oculto":"hidden","texto":"text","imagen":"src"}
@@ -197,9 +198,11 @@ class Analizador():
         teclas=False
         cierraTecla=False
         descrError="Ok"
+        funcionAbierta=False
         cron=0
         t=0
         script="$( document ).ready(function() { wh= parseInt(document.body.clientWidth);hh= parseInt(document.body.clientHeight);"
+        print lineas
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
             ncr=p1.get_chars_in_line()-1
@@ -207,7 +210,6 @@ class Analizador():
                 p2=data.get_iter_at_line_offset(i,ncr)
                 linea = data.get_text(p1,p2)
                 #print "linea "+str(i+1)+": "+linea
-                #inicioLinea=true
                 if inicioLinea:
                     if re.search("^\t",linea):
                         descrError= "ERROR en la linea "+str(i+1)+"=> La linea no Admite 'tab' al inicio"
@@ -334,12 +336,16 @@ class Analizador():
                                                 #"alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"
                                                 if token=="alAbrir":
                                                     script=script+ "$(window).load(function(){;"
+                                                    abiertoBloque=token
                                                 elif token=="alCerrar":
                                                     script=script+ "$(window).unload(function(){"
+                                                    abiertoBloque=token
                                                 elif token =="alPresionarTecla":
                                                     script=script+ "$(document).keypress(function(e){"
+                                                    abiertoBloque=token
                                                 elif token =="alSoltarTecla":
                                                     script=script+ "$(window).keyup(function(e){"
+                                                    abiertoBloque=token
                                                 elif token =="alPulsarTecla":
                                                     script=script+ "$(document).keydown(function(e){"
                                                     teclas=True
@@ -412,7 +418,19 @@ class Analizador():
                                     break
                             #es una funcion?
                             elif token=="func":
-                                print "Posblimente una funcion"
+                                if nombre[-1] == ":":
+                                    nombre=nombre[0:-1]
+                                    if nombre.split("(")[0] in funcionesDeclaradas:
+                                        descrError= "ERROR en la linea "+str(i+1)+"=> Ya existe una fucnion con ese nombre"
+                                        break
+                                    else:
+                                        funcionesDeclaradas.append(nombre.split("(")[0])
+                                        script+="function "+str(nombre)+"{"
+                                        funcionAbierta=True
+                                        inicioLinea=False
+                                else:
+                                     descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
+                                    break
                             #ninguna de las anteriores?
                             else:
                                 descrError= "ERROR en la linea "+str(i+1)+"=> el inicio de linea no se reconoce"
@@ -1244,11 +1262,14 @@ class Analizador():
                                 else:
                                     descrError= "ERROR en la linea "+str(i+1)+"=> No se conoce la accion"
                                     break
+                            elif token in funcionesDeclaradas:
+                                continue
                             else:
                                 descrError= "ERROR en la linea "+str(i+1)+"=> No se conoce la accion"
                                 break
                     #empieza por fin->?
                     elif re.search("^fin->",linea):
+                        print linea.split("->")[1]
                         if condicional!="":
                             descrError= "ERROR en la linea "+str(i+1)+"=> El bloque del Condicional debe cerrarse (fin->)"
                             break
@@ -1265,6 +1286,10 @@ class Analizador():
                             abiertoBloque=""
                             variablesLocales=True
                             teclas=False
+                        elif linea.split("->")[1]=="func":
+                            script+="}"
+                            funcionAbierta=False
+                            inicioLinea=True
                         else:
                             descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de evento debe cerrarse (fin->)"
                         if cierraTecla:
@@ -1277,12 +1302,21 @@ class Analizador():
                 linea=""
                 continue
         if descrError=="Ok":
-            script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}});"
-            self.window.destroy()
+            if condicional!="":
+                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque del Condicional debe cerrarse (fin->)"
+            elif funcionAbierta==True:
+                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de  Funcion debe cerrarse (fin->)"
+            elif abiertoBloque!="":
+                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de evento debe cerrarse (fin->)"
+            elif cierraTecla:
+                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de la Tecla debe cerrarse (fin->)"
+            else:
+                script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}});"
+                self.window.destroy()
         else:
             script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}alert('"+str(descrError)+"')});"
-            self.barraEstado.pus(0,str(descrError))
-            
+                
+        self.barraEstado.push(0,str(descrError))
         obje[0].javascript=""
         obje[0].escritos=""
         print script
