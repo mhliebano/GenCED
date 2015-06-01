@@ -56,6 +56,15 @@ class Acciones:
         self.igu.lienzo.connect("button-press-event",self.presionaRaton)
         self.igu.lienzo.connect('title-changed',self.cambiaTitulo)
     
+    def importarExportado(self,widget,data=None):
+        if self.proyecto=="":
+            self.igu.cuadroMensajes("Proyecto Cerrado","Debe Abrir un proyecto primero antes de importar",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
+            return
+        response=self.igu.cuadroDialogo("Abrir Proyecto",gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+        if response[0] == gtk.RESPONSE_OK:
+            proyecto=str(response[1])+"/main.py"
+            self.igu.cuadroMensajes("Error Importacion de Proyecto Importado","Este metodo aun esta por implementacion",gtk.MESSAGE_WARNING,gtk.BUTTONS_CLOSE)
+    
     def importarFuente(self,widget,data=None):
         if self.proyecto=="":
             self.igu.cuadroMensajes("Proyecto Cerrado","Debe Abrir un proyecto primero antes de importar",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
