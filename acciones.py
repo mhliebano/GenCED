@@ -757,7 +757,7 @@ class Acciones:
                         marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dashed 2px red;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
                     else:
                         marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dotted 2px black;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
-                print self.objetos[self.puntero][i]
+                #print self.objetos[self.puntero][i]
                 pagina=pagina+self.objetos[self.puntero][i].trazaObjeto(self.proyecto.ruta)
                 pagina=pagina+marca
         elif tipo==1:
@@ -1644,7 +1644,7 @@ class Acciones:
                 elif len(self.nivel)==4:
                     if self.nivel[1]==0:
                         #print "Eliminar Objeto"+str(self.nivel[3])+" de la Hoja"+str(self.nivel[2])
-                        texto= "El tipo de objeto a Eliminar es: "+self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
+                        recurso= self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
                         del self.objetos[self.nivel[2]][self.nivel[3]+1]
                         self.actualizaArbol()
                         try:
@@ -1653,7 +1653,7 @@ class Acciones:
                             print e
                             self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]])
                     if self.nivel[1]==1:
-                        recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
+                        recurso= self.recursos[self.nivel[2]][self.nivel[3]].nombre
                         a=self.igu.cuadroMensajes("Confirmar Eliminar Objeto","Esta Seguro de Eliminar Este Objeto ("+str(recurso)+")",gtk.MESSAGE_WARNING,gtk.BUTTONS_YES_NO)
                         if a==gtk.RESPONSE_YES:
                             if self.nivel[2]==0:
