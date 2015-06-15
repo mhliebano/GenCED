@@ -415,6 +415,8 @@ class Acciones:
         for i in range(len(self.objetos)):
             pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script type='text/javascript' src='"+self.proyecto.ruta+"/recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
             for j in range(len(self.objetos[i])):
+                if len(self.objetos[i])==0: #si no tiene objetos no intente acceder a ellos
+					break
                 pagina=pagina+str(self.objetos[i][j].trazaObjeto(self.proyecto.ruta))
             pagina=pagina+"</body></html>"
             self.proyecto.paginas[i]=pagina
@@ -744,6 +746,7 @@ class Acciones:
                     self.recursos.append(["sonidos"])
                     self.recursos.append(["videos"])
                     self.recursos.append(["archivos"])
+                    self.proyecto.paginas.append("<html></html>")
                     self.actualizaArbol()
                     self.igu.barraHojaNueva.set_sensitive(True)
                     self.igu.barraImagenNuevo.set_sensitive(True)
