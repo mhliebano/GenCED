@@ -547,111 +547,75 @@ class Acciones:
                 self.igu.statusbar.push(0, "El tipo de objeto pegado es: "+self.__copi.nombre+" en la "+str(self.objetos[self.nivel[2]][0].nombre))
                 objeto=self.__copi
                 if objeto.__class__==Cuadro:
-                    cuadrado=Cuadro(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])
+                    nuevoObjeto=Cuadro(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])
                     self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])+1
-                    self.objetos[self.puntero].append(cuadrado)
-                    cuadrado.colorFondo=objeto.colorFondo
-                    cuadrado.transparencia=objeto.transparencia
-                    cuadrado.ancho=objeto.ancho
-                    cuadrado.alto=objeto.alto
-                    cuadrado.x=objeto.x
-                    cuadrado.y=objeto.y
-                    cuadrado.borde=objeto.borde
-                    cuadrado.colorBorde=objeto.colorBorde
-                    cuadrado.anchoBorde=objeto.anchoBorde
-                    cuadrado.sombra=objeto.sombra
-                    cuadrado.rotar=objeto.rotar
-                    cuadrado.oculto=objeto.oculto
+                    
                 if objeto.__class__==Circulo:
-                    circulo=Circulo(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])
+                    nuevoObjeto=Circulo(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])
                     self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])+1
-                    self.objetos[self.puntero].append(circulo)
-                    circulo.colorFondo=objeto.colorFondo
-                    circulo.transparencia=objeto.transparencia
-                    circulo.ancho=objeto.ancho
-                    circulo.alto=objeto.alto
-                    circulo.x=objeto.x
-                    circulo.y=objeto.y
-                    circulo.borde=objeto.borde
-                    circulo.colorBorde=objeto.colorBorde
-                    circulo.anchoBorde=objeto.anchoBorde
-                    circulo.sombra=objeto.sombra
-                    circulo.rotar=objeto.rotar
-                    circulo.oculto=objeto.oculto
-                    circulo.radio=objeto.radio
+                    nuevoObjeto.radio=objeto.radio
         
                 if objeto.__class__==Triangulo:
-                    triangulo=Triangulo(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])
+                    nuevoObjeto=Triangulo(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])
                     self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])+1
-                    self.objetos[self.puntero].append(triangulo)
-                    triangulo.colorFondo=objeto.colorFondo
-                    triangulo.transparencia=objeto.transparencia
-                    triangulo.ancho=objeto.ancho
-                    triangulo.alto=objeto.alto
-                    triangulo.x=objeto.x
-                    triangulo.y=objeto.y
-                    triangulo.borde=objeto.borde
-                    triangulo.colorBorde=objeto.colorBorde
-                    triangulo.anchoBorde=objeto.anchoBorde
-                    triangulo.sombra=objeto.sombra
-                    triangulo.rotar=objeto.rotar
-                    triangulo.oculto=objeto.oculto
                 
                 if objeto.__class__==Linea:
-                    linea=Linea(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])
+                    nuevoObjeto=Linea(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])
                     self.objetos[self.nivel[2]][0].cuentaObjetos["linea"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])+1
-                    self.objetos[self.puntero].append(linea)
-                    linea.ancho=objeto.ancho
-                    linea.alto=objeto.alto
-                    linea.x=objeto.x
-                    linea.y=objeto.y
-                    linea.borde=objeto.borde
-                    linea.colorBorde=objeto.colorBorde
-                    linea.anchoBorde=objeto.anchoBorde
-                    linea.rotar=objeto.rotar
-                    linea.oculto=objeto.oculto
                 
                 if objeto.__class__==Imagen:
-                    imagen=Imagen(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])
+                    nuevoObjeto=Imagen(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])
                     self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])+1
-                    self.objetos[self.puntero].append(imagen)
-                    imagen.colorFondo=objeto.colorFondo
-                    imagen.transparencia=objeto.transparencia
-                    imagen.ancho=objeto.ancho
-                    imagen.alto=objeto.alto
-                    imagen.x=objeto.x
-                    imagen.y=objeto.y
-                    imagen.borde=objeto.borde
-                    imagen.colorBorde=objeto.colorBorde
-                    imagen.anchoBorde=objeto.anchoBorde
-                    imagen.sombra=objeto.sombra
-                    imagen.rotar=objeto.rotar
-                    imagen.oculto=objeto.oculto
-                    imagen.imagen=objeto.imagen
-                    imagen.clip=objeto.clip
+                    nuevoObjeto.imagen=objeto.imagen
+                    nuevoObjeto.clip=objeto.clip
+                    nuevoObjeto.rt=objeto.rt
                 
                 if objeto.__class__==Texto:
-                    texto=Texto(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])
+                    nuevoObjeto=Texto(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])
                     self.objetos[self.nivel[2]][0].cuentaObjetos["texto"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])+1
-                    self.objetos[self.puntero].append(texto)
-                    texto.colorFondo=objeto.colorFondo
-                    texto.transparencia=objeto.transparencia
-                    texto.ancho=objeto.ancho
-                    texto.alto=objeto.alto
-                    texto.x=objeto.x
-                    texto.y=objeto.y
-                    texto.borde=objeto.borde
-                    texto.colorBorde=objeto.colorBorde
-                    texto.anchoBorde=objeto.anchoBorde
-                    texto.sombra=objeto.sombra
-                    texto.rotar=objeto.rotar
-                    texto.oculto=objeto.oculto
-                    texto.texto=objeto.texto
-                    texto.tamanoTexto=objeto.tamanoTexto
-                    texto.colorTexto=objeto.colorTexto
-                    texto.fuente=objeto.fuente
-                    texto.alineacion=objeto.alineacion
+                    nuevoObjeto.tamanoTexto=objeto.tamanoTexto
+                    nuevoObjeto.colorTexto=objeto.colorTexto
+                    nuevoObjeto.fuente=objeto.fuente
+                    nuevoObjeto.alineacion=objeto.alineacion
+                    nuevoObjeto.texto=objeto.texto
+                    
+                if objeto.__class__==Boton:
+                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["boton"])
+                    self.objetos[self.nivel[2]][0].cuentaObjetos["boton"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["boton"])+1
+
+                if objeto.__class__==Entrada:
+                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"])
+                    self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"])+1
+
+                if objeto.__class__==Lista:
+                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["lista"])
+                    self.objetos[self.nivel[2]][0].cuentaObjetos["lista"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["lista"])+1
+
+                if objeto.__class__==Check:
+                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["check"])
+                    self.objetos[self.nivel[2]][0].cuentaObjetos["check"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["check"])+1
+
+                if objeto.__class__==Area:
+                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])
+                    self.objetos[self.nivel[2]][0].cuentaObjetos["area"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])+1
                 
+                self.objetos[self.puntero].append(nuevoObjeto)
+                nuevoObjeto.colorFondo=objeto.colorFondo
+                nuevoObjeto.transparencia=objeto.transparencia
+                nuevoObjeto.ancho=objeto.ancho
+                nuevoObjeto.alto=objeto.alto
+                nuevoObjeto.x=objeto.x
+                nuevoObjeto.y=float(objeto.y)+5
+                nuevoObjeto.borde=objeto.borde
+                nuevoObjeto.colorBorde=objeto.colorBorde
+                nuevoObjeto.anchoBorde=objeto.anchoBorde
+                nuevoObjeto.sombra=objeto.sombra
+                nuevoObjeto.rotar=objeto.rotar
+                nuevoObjeto.oculto=objeto.oculto
+                nuevoObjeto.tip=objeto.tip
+                nuevoObjeto.etiqueta=objeto.etiqueta
+                nuevoObjeto.borde=objeto.borde
+
                 self.actualizaArbol()
                 self.EDITADO=0
                 self.igu.barraGua.set_sensitive(True)
