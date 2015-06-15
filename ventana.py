@@ -386,6 +386,7 @@ class Ventana:
         
     def cuadroDialogo(self,titulo,accion,botones):
         dialogo = gtk.FileChooserDialog(titulo,self.window,accion,botones)
+        dialogo.set_current_folder(os.path.expanduser('~'))
         response = dialogo.run()
         archivo=dialogo.get_filename()
         dialogo.destroy()
