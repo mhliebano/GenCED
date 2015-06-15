@@ -768,7 +768,7 @@ class Acciones:
             pagina=pagina+"<div><audio id='player' autoplay><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/ogg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/mpeg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/wav'   preload='none'></audio></div><h3>"+str(recurso)+"</h3><button onclick=\"document.getElementById('player').play();\">Reproducir</button><button onclick=\"document.getElementById('player').pause();document.getElementById('player').currentTime=0;\">Detener</button><button onclick=\"document.getElementById('player').pause()\">Pausa</button><button onclick=\"document.getElementById(\'player\').volume += 0.1;\">Subir Volumen</button><button onclick=\"document.getElementById(\'player\').volume -= 0.1;\">Bajar Volumen</button>"
         elif tipo==3:
             recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-            pagina=pagina+"<div><video autoplay preload='auto' heigth='75%' width='75%'><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/ogg' ><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/mp4'></video></div><h3>"+str(recurso)+"</h3>"
+            pagina=pagina+"<div style='background-color:black'><video autoplay preload='auto' heigth='75%' width='75%'><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/ogg' ><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/mp4'><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/webm'>No soportado video</video><div style='clear:both'></div></div><h3>"+str(recurso)+"</h3>"
         elif tipo==4:
             recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
             pagina=pagina+"<div><style>@font-face{font-family:'fuente';src: url('"+self.proyecto.ruta+"/recursos/archivos/"+str(recurso)+"')}</style></div><h3 style='font-family:fuente'>El niño Simón Bolívar, Tocaba alegre el tambor, en un patio de granados, que siempre estaban en flor</h3><h4 style='font-family:fuente'>Pero un día se hizo grande, el que fue niño Simón y anduvo por America cuando era Libertador</h4>"
@@ -1241,7 +1241,7 @@ class Acciones:
             
         elif data==2:
             filtro.set_name("Videos")
-            filtro.add_pattern("*.ogg")
+            filtro.add_pattern("*.ogv")
             filtro.add_pattern("*.mp4")
             filtro.add_pattern("*.webm")
         elif data==3:
@@ -1656,7 +1656,8 @@ class Acciones:
                         except IndexError,e:
                             self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]])
                     if self.nivel[1]==1:
-                        recurso= self.recursos[self.nivel[2]][self.nivel[3]].nombre
+                        recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
+                        print recurso
                         a=self.igu.cuadroMensajes("Confirmar Eliminar Objeto","Esta Seguro de Eliminar Este Objeto ("+str(recurso)+")",gtk.MESSAGE_WARNING,gtk.BUTTONS_YES_NO)
                         if a==gtk.RESPONSE_YES:
                             if self.nivel[2]==0:
