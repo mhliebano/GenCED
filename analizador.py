@@ -533,7 +533,10 @@ class Analizador():
                                                                     elif atr=="imagen":
                                                                         script=script+"var "+str(variable)+"='$('#"+str(param[0])+"').attr('src');"
                                                                     elif atr=="texto":
-                                                                        script=script+"var "+str(variable)+"='$('#"+str(param[0])+"').text();"
+                                                                        if re.search("^Entrada[0-9]$",param[0]):
+                                                                            script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').val();"
+                                                                        else:
+                                                                            script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').text();"
                                                                     elif atr=="tamanoTexto":
                                                                         script=script+"var "+str(variable)+"=parseInt($('#"+str(param[0])+"').css('font-size'));"
                                                                     elif atr=="colorTexto":
@@ -683,7 +686,7 @@ class Analizador():
                                                                     elif atr=="lista":
                                                                         script=script+" "+str(variable)+"='"+str(obje[obt].lista)+"';"
                                                                     elif atr=="valor":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].valor)+"';"
+                                                                        script+="var "+str(variable)+"=$('#"+str(param[0])+"').val();"
                                                                     else:
                                                                         descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" no tiene la propiedad "+str(param[1])
                                                                         break
