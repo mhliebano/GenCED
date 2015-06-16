@@ -356,17 +356,19 @@ class Acciones:
         pass
     
     def verImagenes(self,widget,accion):
+        print os.path.dirname(os.path.realpath(__file__))
         if accion==None:
             pagina="<html><head><script>function cf(id){document.title=id}</script></head><body><h1>Categorias de Imagenes</h1>"
-            for (path,directory,archivos) in os.walk("./recursos/imagenes"):
-                categoria=path.split("/")
+            for (path,directory,archivos) in os.walk(os.path.join(os.path.dirname(os.path.realpath(__file__)),"recursos/imagenes")):
+                categoria=path.split("GenCED")
+                categoria= categoria[1].split("/")
                 if len(categoria)>3:
-                    pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:2%;float:left;text-align:center'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/iconos/carpeta.png' style='display:block;width:90%;height;65%' onclick='cf(this.id)' id='0+"+str(categoria[3])+"'/>"+str(categoria[3])+"</div>"
+                    pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:5%;float:left;text-align:center'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/iconos/carpeta.png' style='display:block;width:90%;height;65%' onclick='cf(this.id)' id='0+"+str(categoria[3])+"'/>"+str(categoria[3])+"</div>"
             pagina+="</body></html>"
         else:
             pagina="<html><head><script>function cf(id){document.title=id}</script></head><body><h1>Categorias de Imagenes: "+str(accion)+"</h1>"
             i=0
-            for (path,ficheros,archivos) in os.walk("./recursos/imagenes/"+str(accion)):
+            for (path,ficheros,archivos) in os.walk(os.path.join(os.path.dirname(os.path.realpath(__file__)),"recursos/imagenes/"+str(accion))):
                 for (imagen) in archivos:
                     pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:2%;float:left;text-align:center;border:1px solid #000000'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(accion)+"/"+str(imagen)+"' style='display:block;width:80%;height:65%' onclick='cf(this.id)' id='2+"+accion+"+"+imagen+"'/>"+imagen+"</div>"
             pagina+="</body></html>"
@@ -416,7 +418,7 @@ class Acciones:
             pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script type='text/javascript' src='"+self.proyecto.ruta+"/recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
             for j in range(len(self.objetos[i])):
                 if len(self.objetos[i])==0: #si no tiene objetos no intente acceder a ellos
-					break
+                    break
                 pagina=pagina+str(self.objetos[i][j].trazaObjeto(self.proyecto.ruta))
             pagina=pagina+"</body></html>"
             self.proyecto.paginas[i]=pagina
