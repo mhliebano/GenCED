@@ -270,15 +270,52 @@ class Analizador():
                                                         script=script+str(variable)+"=sessionStorage."+str(atr)+";"
                                                 #ninguna de las anteriores
                                                 else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+" 267=> La variable "+str(nombre)+" no se le puede asignar ese valor"
+                                                    descrError= "ERROR en la linea "+str(i+1)+" 273=> La variable "+str(nombre)+" no se le puede asignar ese valor"
                                                     break
                                         #estoy fuera de la declaracion de variables
                                         else:
                                             descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se puede declarar en este contexto"
                                             break
+                                    #es una variable de arreglo?
+                                    elif re.search("^[a-z].*.[a-z]\[\d+\]",variable):
+                                        if variable.split("[")[0] in variablesDeclaradas:
+                                            #es una variable numerica?
+                                            if re.search("^[0-9]*.[0-9]*$",asignacion):
+                                                #print "posible numero"
+                                                script=script+"var "+variable+" = "+asignacion+";"
+                                            #es una variable de texto
+                                            elif re.search("^\"*.*\"$",asignacion):
+                                                #print "posible cadena"
+                                                script=script+"var "+variable+" = '"+asignacion+"';"
+                                            elif asignacion.split("(")[0]=="aritmetica":
+                                                atr=asignacion.split("(")[1]
+                                                atr=atr[0:len(atr)-1]
+                                                script=script+"var "+variable+"="+str(atr)+";"
+                                            elif asignacion.split("(")[0]=="arreglo":
+                                                atr=asignacion.split("(")[1]
+                                                atr=atr[0:len(atr)-1]
+                                                if len(atr)==0:
+                                                    script+="var "+variable+"=new Array();"
+                                                else:
+                                                    script+="var "+variable+"=new Array("+str(atr)+");"
+                                            elif asignacion.split("(")[0]=="aleatorio":
+                                                atr=asignacion.split("(")[1]
+                                                atr=atr[0:len(atr)-1]
+                                                script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                                            elif asignacion.split("(")[0]=="leerDato":
+                                                atr=asignacion.split("(")[1]
+                                                atr=atr[0:len(atr)-1]
+                                                script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                                            #ninguna de las anteriores
+                                            else:
+                                                descrError= "ERROR en la linea "+str(i+1)+" (311)> Al arreglo "+str(nombre)+" no se le puede asignar ese valor"
+                                                break
+                                        else:
+                                            descrError= "ERROR en la linea "+str(i+1)+" (314)=> La asignacion "+str(nombre)+" no pertenece a un arreglo"
+                                            break
                                     #no tiene solo letras minusculas
                                     else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" solo puede contener letras minusculas"
+                                        descrError= "ERROR en la linea "+str(i+1)+" (318)=> La variable "+str(nombre)+" solo puede contener letras minusculas"
                                         break
                                 #No esta asignada
                                 else:
