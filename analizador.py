@@ -204,7 +204,6 @@ class Analizador():
         cron=0
         t=0
         script="$( document ).ready(function() { wh= parseInt(document.body.clientWidth);hh= parseInt(document.body.clientHeight);"
-        print lineas
         for i in range(lineas-1):
             p1=data.get_iter_at_line(i)
             ncr=p1.get_chars_in_line()-1
@@ -253,13 +252,19 @@ class Analizador():
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+"var "+variable+"="+str(atr)+";"
+
+                                                elif asignacion.split("(")[0]=="aleatorio":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
+
                                                 elif asignacion.split("(")[0]=="leerDato":
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+str(variable)+"=sessionStorage."+str(atr)+";"
                                                 #ninguna de las anteriores
                                                 else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se le puede asignar ese valor"
+                                                    descrError= "ERROR en la linea "+str(i+1)+" 267=> La variable "+str(nombre)+" no se le puede asignar ese valor"
                                                     break
                                         #estoy fuera de la declaracion de variables
                                         else:
@@ -370,14 +375,14 @@ class Analizador():
                                 #el objeto existe realmente?
                                 for i in range(len(obje)):
                                     if nombre[0:-1] == obje[i].nombre:
-                                        print nombre[0:-1]
+                                        #print nombre[0:-1]
                                         nm=True
                                         break
                                 if nm==True:
                                     #termina la linea con :?
                                     if nombre[-1] == ":":
                                         #Tiene algun caracter extraño?
-                                        print nombre[0:-1]
+                                        #print nombre[0:-1]
                                         if re.search("^[a-zA-Z0-9]*$",nombre[0:-1]):
                                             #termina con un numero?
                                             if re.search("[0-9]$",nombre[0:-1]):
@@ -449,7 +454,7 @@ class Analizador():
                             token=linea.split("->")[0]
                             nombre=linea.split("->")[1]
                             #es una variable valida?
-                            print str(token)+" dentro de un bloque"
+                            #print str(token)+" dentro de un bloque"
                             if token in variablesValidas:
                                 #es una variable local?
                                 if re.search("^\tvarl",linea):
@@ -574,21 +579,33 @@ class Analizador():
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                                                    elif asignacion.split("(")[0]=="aritmetica":
+                                                        #print aritmetica
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        script=script+"var "+variable+"=parseFloat("+str(atr)+");"
+                                                    elif asignacion.split("(")[0]=="aleatorio":
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
                                                     else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se le puede asignar valor" 
+                                                        descrError= "ERROR en la linea "+str(i+1)+" 592=> La variable "+str(nombre)+" no se le puede asignar valor" 
                                                         break
+                                                elif asignacion.split("(")[0]=="aritmetica":
+                                                    #print aritmetica
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+"var "+variable+"=parseFloat("+str(atr)+");"
+                                                elif asignacion.split("(")[0]=="aleatorio":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
                                                 #ninguna de las anteriores
                                                 else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se le puede asignar ese valor"
+                                                    descrError= "ERROR en la linea "+str(i+1)+" 597=> La variable "+str(nombre)+" no se le puede asignar ese valor"
                                                     break
-                                        elif asignacion.split("(")[0]=="aritmetica":
-                                            #print aritmetica
-                                            atr=asignacion.split("(")[1]
-                                            atr=atr[0:len(atr)-1]
-                                            script=script+"var "+variable+"=parseFloat("+str(atr)+");"
-                                        
                                         else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" solo puede contener letras minusculas"
+                                            descrError= "ERROR en la linea "+str(i+1)+" 608=> La variable "+str(nombre)+" solo puede contener letras minusculas"
                                             break
                                     else:
                                         descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=)"
@@ -623,7 +640,6 @@ class Analizador():
                                                 elif "\t"+asignacion.split("(")[0] in elementosBloque:
                                                     #solo las permitidas que retornan valores
                                                     if asignacion.split("(")[0]=="propiedad":
-                                                        print "asignada retorna propiedad"
                                                         #print "asignada retorna propiedad"
                                                         param=asignacion.split("(")
                                                         param=param[1].split(",")
@@ -706,17 +722,34 @@ class Analizador():
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                                                    elif asignacion.split("(")[0]=="aritmetica":
+                                                        #print aritmetica
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        script=script+" "+variable+"=parseFloat("+str(atr)+");"
+
+                                                    elif asignacion.split("(")[0]=="aleatorio":
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
+
                                                     else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo no retorna valores"
+                                                        descrError= "ERROR en la linea "+str(i+1)+" 737=> El metodo no retorna valores"
                                                         break
                                                 elif asignacion.split("(")[0]=="aritmetica":
                                                     #print aritmetica
                                                     atr=asignacion.split("(")[1]
                                                     atr=atr[0:len(atr)-1]
                                                     script=script+" "+variable+"=parseFloat("+str(atr)+");"
+
+                                                elif asignacion.split("(")[0]=="aleatorio":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
+
                                                 #ninguna de las anteriores
                                                 else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se le puede asignar ese valor"
+                                                    descrError= "ERROR en la linea "+str(i+1)+" 752=> La variable "+str(nombre)+" no se le puede asignar ese valor"
                                                     break
                                         else:
                                             descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" solo puede contener letras minusculas"
@@ -750,7 +783,6 @@ class Analizador():
                             #Probamos con elementos de bloque
                             token=linea.split("(")[0]
                             parametro=linea.split("(")[1]
-                            print token
                             #es un elemento de bloque?
                             if token in elementosBloque:
                                 #cual elemento es?
@@ -875,10 +907,10 @@ class Analizador():
                                             atr=param[1]
                                             atr=atr[0:len(atr)-1]
                                             if atr == "Si":
-                                                print "ok mostramos con efecto"
+                                                #print "ok mostramos con efecto"
                                                 script=script+"$('#"+param[0]+"').show('slow');"
                                             elif atr == "No":
-                                                print "ok mostramos sin efecto"
+                                                #print "ok mostramos sin efecto"
                                                 script=script+"$('#"+param[0]+"').show();"
                                             else:
                                                 descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el segundo parametro sea (Si o No)"
@@ -903,10 +935,10 @@ class Analizador():
                                             atr=param[1]
                                             atr=atr[0:len(atr)-1]
                                             if atr == "Si":
-                                                print "ok ocultamos con efecto"
+                                                #print "ok ocultamos con efecto"
                                                 script=script+"$('#"+param[0]+"').hide('slow');"
                                             elif atr == "No":
-                                                print "ok ocultamos sin efecto"
+                                                #print "ok ocultamos sin efecto"
                                                 script=script+"$('#"+param[0]+"').hide();"
                                             else:
                                                 descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el segundo parametro sea (Si o No)"
@@ -934,14 +966,15 @@ class Analizador():
                                                 valor=valor[0:len(valor)-1]
                                                 if valor[0:len(valor)-1].isdigit():
                                                     script+="$('#"+param[0]+"').css({WebkitTransform: 'rotate("+str(valor)+"deg)'});"
-                                                    print "ok rotamos con efecto" +valor[0:len(valor)-1]
+                                                    #print "ok rotamos con efecto" +valor[0:len(valor)-1]
                                                 else:
                                                     descrError= "ERROR en la linea "+str(i+1)+"=> El parametro 3 debe ser un digito"
                                                     break
                                             elif atr == "No":
                                                 valor=param[2]
                                                 if valor[0:len(valor)-1].isdigit():
-                                                    print "ok rotamos sin efecto" +valor[0:len(valor)-1]
+                                                    script+="$('#"+param[0]+"').css({WebkitTransform: 'rotate("+str(valor)+"deg)'});"
+                                                    #print "ok rotamos sin efecto" +valor[0:len(valor)-1]
                                                 else:
                                                     descrError= "ERROR en la linea "+str(i+1)+"=> El parametro 3 debe ser un digito"
                                                     break
@@ -969,7 +1002,7 @@ class Analizador():
                                                 if param[2].isdigit():
                                                     atr=param[3]
                                                     atr=atr[0:len(atr)-1]
-                                                    print atr
+                                                    #print atr
                                                     if atr=="Si":
                                                         script+="$('#"+param[0]+"').animate({left:'"+str(param[1])+"%',top:'"+str(param[2])+"%'},'slow');"
                                                     elif atr=="No":
@@ -980,7 +1013,7 @@ class Analizador():
                                                 elif param[2] in variablesDeclaradas:
                                                     atr=param[3]
                                                     atr=atr[0:len(atr)-1]
-                                                    print atr
+                                                    #print atr
                                                     if atr=="Si":
                                                         script+="$('#"+param[0]+"').animate({left:'"+str(param[1])+"%',top:"+str(param[2])+"+'%'},'slow');"
                                                     elif atr=="No":
@@ -995,7 +1028,7 @@ class Analizador():
                                                 if param[2].isdigit():
                                                     atr=param[3]
                                                     atr=atr[0:len(atr)-1]
-                                                    print atr
+                                                    #print atr
                                                     if atr=="Si":
                                                         script+="$('#"+param[0]+"').animate({left:"+str(param[1])+"+'%',top:'"+str(param[2])+"%'},'slow');"
                                                     elif atr=="No":
