@@ -40,7 +40,7 @@ class Escena(object):
         self.transparencia=1.0
         self.imagen=None
         self.ajusteImagen="Falso"
-        self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"sonido":0}
+        self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"sonido":0,"video":0}
         self.escritos=""
         self.javascript=""
     def obtenerNombre(self):
@@ -324,5 +324,23 @@ class Sonido(ObjetoPrimario):
     
     def propiedades(self):
          return "m\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.sonido)+"\n"
+    
+    nombre = property(obtenerNombre)
+
+class Video(ObjetoPrimario):
+    def __init__(self,x):
+        ObjetoPrimario.__init__(self)
+        self._nombre="Video"+str(x)
+        self.video=None
+        self.ancho=25
+        self.alto=25
+    def obtenerNombre(self):
+        return self._nombre
+    
+    def trazaObjeto(self,archivo):
+       return "<video id='"+str(self._nombre)+"' class='tiempoDiseno' style='position:absolute;background-color:black;top:"+str(self.y)+"%;left:"+str(self.x)+"%' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%'><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='video/ogg'   preload><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='audio/mp4'   preload><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='video/webm'   preload></video>"
+    
+    def propiedades(self):
+         return "m\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.video)+"\n"
     
     nombre = property(obtenerNombre)
