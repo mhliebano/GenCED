@@ -1200,6 +1200,11 @@ class Acciones:
             self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"])+1
             self.objetos[self.puntero].append(sonido)
             self.igu.statusbar.push(0,"Insertamos un Sonido")
+        if data==12:
+            video=Video(self.objetos[self.nivel[2]][0].cuentaObjetos["video"])
+            self.objetos[self.nivel[2]][0].cuentaObjetos["video"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["video"])+1
+            self.objetos[self.puntero].append(video)
+            self.igu.statusbar.push(0,"Insertamos un video")
         if data==13:
             obj=[]
             for i in range(len(self.objetos[self.puntero])):
@@ -1412,6 +1417,10 @@ class Acciones:
             lista.append(["None"])
             for fila in range(len(self.recursos[1])-1):
                 lista.append([self.recursos[1][fila+1]])
+        if tipoLista==11:
+            lista.append(["None"])
+            for fila in range(len(self.recursos[2])-1):
+                lista.append([self.recursos[2][fila+1]])
         return lista
     
     def actualizaVistaPropiedades(self,objeto):
@@ -1619,7 +1628,14 @@ class Acciones:
         if objeto.__class__==Sonido:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
             almacen.append(["sonido",objeto.sonido,self.llenaListas(10)])
-        
+        if objeto.__class__==Video:
+            almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
+            almacen.append(["video",objeto.video,self.llenaListas(11)])
+            almacen.append(["x",objeto.x,self.llenaListas(5)])
+            almacen.append(["y",objeto.y,self.llenaListas(5)])
+            almacen.append(["ancho",objeto.ancho,self.llenaListas(4)])
+            almacen.append(["alto",objeto.alto,self.llenaListas(4)])
+
         if objeto.__class__==Proyecto:
             almacen.append(["ruta",objeto.ruta,self.llenaListas(4)])
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
