@@ -81,6 +81,8 @@ class Analizador():
         f=listaIzquierda.append(padre,["inc",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["dec",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["hoja",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
+        f=listaIzquierda.append(padre,["sonido",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
+        f=listaIzquierda.append(padre,["video",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["escribirDato",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["leerDato",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
         f=listaIzquierda.append(padre,["tecla",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/metodo.png'))])
@@ -177,7 +179,7 @@ class Analizador():
     def analizador(self,widget,data=None,objetos=None,recursos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
-        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro"]
+        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\tvideo","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro"]
         variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
         funcionesDeclaradas=[]
@@ -1109,6 +1111,20 @@ class Analizador():
                                             script=script+"document.getElementById('"+param[0]+"').volume -= 0.1;"
                                         elif param[1]=="ciclo":
                                             script=script+"document.getElementById('"+param[0]+"').loop=true;document.getElementById('"+param[0]+"').play();"
+                                        else:
+                                            descrError= "ERROR en la linea "+str(i+1)+"=> El segundo parametro de sonido no se reconoce"
+                                            break
+                                    else:
+                                        script=script+"document.getElementById('"+parametro+"').play();"
+                                elif token=="\tvideo":
+                                    parametro=parametro[0:len(parametro)-1]
+                                    param=parametro.split(",")
+                                    if len(param)==2:
+                                        parametro=parametro[0:len(parametro)-1]
+                                        if param[1]=="pausa":
+                                            script=script+"document.getElementById('"+param[0]+"').pause();"
+                                        elif param[1]=="detener":
+                                            script=script+"document.getElementById('"+param[0]+"').pause();document.getElementById('"+param[0]+"').currentTime=0;"
                                         else:
                                             descrError= "ERROR en la linea "+str(i+1)+"=> El segundo parametro de sonido no se reconoce"
                                             break
