@@ -179,7 +179,7 @@ class Analizador():
     def analizador(self,widget,data=None,objetos=None,recursos=None):
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
-        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\tvideo","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro"]
+        elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\tvideo","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro","\tarreglo"]
         variablesValidas=["varg","\tvarl","\tvarg"]
         variablesDeclaradas=[]
         funcionesDeclaradas=[]
@@ -252,11 +252,17 @@ class Analizador():
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+"var "+variable+"="+str(atr)+";"
-
+                                                elif asignacion.split("(")[0]=="arreglo":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    if len(atr)==0:
+                                                        script+="var "+variable+"=new Array();"
+                                                    else:
+                                                        script+="var "+variable+"=new Array("+str(atr)+");"
                                                 elif asignacion.split("(")[0]=="aleatorio":
                                                     atr=asignacion.split("(")[1]
                                                     atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
+                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
 
                                                 elif asignacion.split("(")[0]=="leerDato":
                                                         atr=asignacion.split("(")[1]
@@ -575,6 +581,7 @@ class Analizador():
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+"var "+variable+"=prompt('"+atr+"');"
+
                                                     elif asignacion.split("(")[0]=="leerDato":
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
@@ -584,6 +591,13 @@ class Analizador():
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
                                                         script=script+"var "+variable+"=parseFloat("+str(atr)+");"
+                                                    elif asignacion.split("(")[0]=="arreglo":
+                                                        atr=asignacion.split("(")[1]
+                                                        atr=atr[0:len(atr)-1]
+                                                        if len(atr)==0:
+                                                            script+="var "+variable+"=new Array();"
+                                                        else:
+                                                            script+="var "+variable+"=new Array("+str(atr)+");"
                                                     elif asignacion.split("(")[0]=="aleatorio":
                                                         atr=asignacion.split("(")[1]
                                                         atr=atr[0:len(atr)-1]
