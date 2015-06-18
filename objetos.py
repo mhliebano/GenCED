@@ -341,6 +341,6 @@ class Video(ObjetoPrimario):
        return "<video id='"+str(self._nombre)+"' class='tiempoDiseno' style='position:absolute;background-color:black;top:"+str(self.y)+"%;left:"+str(self.x)+"%' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%'><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='video/ogg'   preload><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='audio/mp4'   preload><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='video/webm'   preload></video>"
     
     def propiedades(self):
-         return "m\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.video)+"\n"
+         return "v\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.video)+"\n"
     
     nombre = property(obtenerNombre)

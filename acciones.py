@@ -352,16 +352,15 @@ class Acciones:
         elif response[0] == gtk.RESPONSE_CANCEL:
             self.igu.statusbar.push(0,"No se Importo proyecto. Cancelado")
     
-    def importarExportado(self,widget,data=None):
-        pass
     
     def verImagenes(self,widget,accion):
         if accion==None:
             pagina="<html><head><script>function cf(id){document.title=id}</script></head><body><h1>Categorias de Imagenes</h1>"
-            for (path,directory,archivos) in os.walk("./recursos/imagenes"):
-                categoria=path.split("/")
+            for (path,directory,archivos) in os.walk(os.path.join(os.path.dirname(os.path.realpath(__file__)),"recursos/imagenes")):
+                categoria=path.split("GenCED")
+                categoria= categoria[1].split("/")
                 if len(categoria)>3:
-                    pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:2%;float:left;text-align:center'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/iconos/carpeta.png' style='display:block;width:90%;height;65%' onclick='cf(this.id)' id='0+"+str(categoria[3])+"'/>"+str(categoria[3])+"</div>"
+                    pagina+="<div style='width:10%;height:10%;margin-left:1%;margin-bottom:8%;float:left;text-align:center'><img src='"+os.path.dirname(os.path.realpath(__file__))+"/iconos/carpeta.png' style='display:block;width:90%;height;65%;margin-bottom:5%' onclick='cf(this.id)' id='0+"+str(categoria[3])+"'/>"+str(categoria[3])+"</div>"
             pagina+="</body></html>"
         else:
             pagina="<html><head><script>function cf(id){document.title=id}</script></head><body><h1>Categorias de Imagenes: "+str(accion)+"</h1>"
@@ -1095,6 +1094,15 @@ class Acciones:
                         obj=Sonido(self.objetos[ind][0].cuentaObjetos["sonido"])
                         self.objetos[ind][0].cuentaObjetos["sonido"]=int(self.objetos[ind][0].cuentaObjetos["sonido"])+1
                         obj.sonido=x[15]
+                        self.objetos[ind].append(obj)
+                    if x[0]=="v":
+                        obj=Video(self.objetos[ind][0].cuentaObjetos["video"])
+                        self.objetos[ind][0].cuentaObjetos["video"]=int(self.objetos[ind][0].cuentaObjetos["video"])+1
+                        obj.ancho=x[3]
+                        obj.alto=x[4]
+                        obj.x=x[5]
+                        obj.y=x[6]
+                        obj.video=x[15]
                         self.objetos[ind].append(obj)
                     if x[0]=="1":
                         self.recursos[0].append(x[1])
