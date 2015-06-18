@@ -997,6 +997,7 @@ class Acciones:
                         obj.colorTexto=x[17]
                         obj.fuente=x[18]
                         obj.alineacion=x[19]
+                        obj.parrafo=x[20]
                         obj.tip=x[13]
                         obj.etiqueta=x[14]
                         self.objetos[ind].append(obj)
@@ -1429,6 +1430,12 @@ class Acciones:
             lista.append(["None"])
             for fila in range(len(self.recursos[2])-1):
                 lista.append([self.recursos[2][fila+1]])
+        if tipoLista==12:
+            lista.append(["None"])
+            lista.append(["center"])
+            lista.append(["left"])
+            lista.append(["right"])
+            lista.append(["justify"])
         return lista
     
     def actualizaVistaPropiedades(self,objeto):
@@ -1544,7 +1551,8 @@ class Acciones:
             almacen.append(["tamanoTexto",objeto.tamanoTexto,self.llenaListas(5)])
             almacen.append(["colorTexto",objeto.colorTexto,self.llenaListas(1)])
             almacen.append(["fuente",objeto.fuente,self.llenaListas(9)])
-            almacen.append(["alineacion",objeto.alineacion,self.llenaListas(4)])
+            almacen.append(["alineacion",objeto.alineacion,self.llenaListas(12)])
+            almacen.append(["parrafo",objeto.parrafo,self.llenaListas(4)])
             almacen.append(["tip",objeto.tip,self.llenaListas(4)])
             almacen.append(["etiqueta",objeto.etiqueta,self.llenaListas(4)])
         
@@ -1625,6 +1633,7 @@ class Acciones:
             almacen.append(["alto",objeto.alto,self.llenaListas(5)])
             almacen.append(["x",objeto.x,self.llenaListas(5)])
             almacen.append(["y",objeto.y,self.llenaListas(5)])
+            almacen.append(["borde",objeto.borde,self.llenaListas(6)])
             almacen.append(["colorBorde",objeto.colorBorde,self.llenaListas(1)])
             almacen.append(["anchoBorde",objeto.anchoBorde,self.llenaListas(5)])
             almacen.append(["sombra",objeto.sombra,self.llenaListas(4)])
