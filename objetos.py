@@ -156,15 +156,17 @@ class Texto(ObjetoPrimario):
         self.colorTexto="Negro"
         self.fuente="Arial"
         self.alineacion="center"
-
+        self.parrafo="Falso"
     def obtenerNombre(self):
         return self._nombre
     
     def trazaObjeto(self,archivo):
-        return "<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"%;text-align:"+str(self.alineacion)+"' >"+str(self.texto)+"</div>"
-    
+        if self.parrafo=="Falso":
+            return "<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"pt;text-align:"+str(self.alineacion)+"' >"+str(self.texto)+"</div>"
+        else:
+            return "<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><textarea disabled id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"pt;text-align:"+str(self.alineacion)+"' >"+str(self.texto)+"</textarea>"
     def propiedades(self):
-        return "x\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\\"+str(self.tamanoTexto)+"\\"+str(self.colorTexto)+"\\"+str(self.fuente)+"\\"+str(self.alineacion)+"\n"
+        return "x\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\\"+str(self.tamanoTexto)+"\\"+str(self.colorTexto)+"\\"+str(self.fuente)+"\\"+str(self.alineacion)+"\\"+str(self.parrafo)+"\n"
 
     nombre = property(obtenerNombre)
 
