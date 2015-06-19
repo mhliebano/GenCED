@@ -225,6 +225,7 @@ class Analizador():
                                 if re.search("=",nombre):
                                     variable=nombre.split("=")[0]
                                     asignacion=nombre.split("=")[1]
+                                    print variable
                                     #contiene solo letras minusculas?
                                     if re.search("^[a-z]*$",variable):
                                         #Puedo declarar variables aqui?
@@ -277,7 +278,7 @@ class Analizador():
                                             descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se puede declarar en este contexto"
                                             break
                                     #es una variable de arreglo?
-                                    elif re.search("^[a-z].*.[a-z]\[\d+\]",variable):
+                                    elif re.search("^[a-z]+\[\d+\]",variable):
                                         if variable.split("[")[0] in variablesDeclaradas:
                                             #es una variable numerica?
                                             if re.search("^[0-9]*.[0-9]*$",asignacion):
@@ -315,7 +316,7 @@ class Analizador():
                                             break
                                     #no tiene solo letras minusculas
                                     else:
-                                        descrError= "ERROR en la linea "+str(i+1)+" (318)=> La variable "+str(nombre)+" solo puede contener letras minusculas"
+                                        descrError= "ERROR en la linea "+str(i+1)+" (318)=> La variable "+str(variable)+" solo puede contener letras minusculas"
                                         break
                                 #No esta asignada
                                 else:
@@ -655,9 +656,49 @@ class Analizador():
                                                 else:
                                                     descrError= "ERROR en la linea "+str(i+1)+" 597=> La variable "+str(nombre)+" no se le puede asignar ese valor"
                                                     break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+" 608=> La variable "+str(nombre)+" solo puede contener letras minusculas"
-                                            break
+                                        #es una variable de arreglo?
+                                        elif re.search("^[a-z]+\[\d+\]",variable):
+                                            if variable.split("[")[0] in variablesDeclaradas:
+                                                #es una variable numerica?
+                                                if re.search("^[0-9]*.[0-9]*$",asignacion):
+                                                    #print "posible numero"
+                                                    script=script+"var "+variable+" = "+asignacion+";"
+                                                #es una variable de texto
+                                                elif re.search("^\"*.*\"$",asignacion):
+                                                    #print "posible cadena"
+                                                    script=script+"var "+variable+" = '"+asignacion+"';"
+                                                elif asignacion.split("(")[0]=="aritmetica":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+"var "+variable+"="+str(atr)+";"
+                                                elif asignacion.split("(")[0]=="arreglo":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    if len(atr)==0:
+                                                        script+="var "+variable+"=new Array();"
+                                                    else:
+                                                        script+="var "+variable+"=new Array("+str(atr)+");"
+                                                elif asignacion.split("(")[0]=="aleatorio":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                                                elif asignacion.split("(")[0]=="leerDato":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                                                elif re.search("^[a-z]+\[\d+\]",asignacion):
+                                                    if asignacion.split("[")[0] in variablesDeclaradas:
+                                                        script=script+str(variable)+"="+str(asignacion)+";"
+                                                    else:
+                                                        descrError= "ERROR en la linea "+str(i+1)+" (692)> Arreglo no declarado"
+                                                        break
+                                                #ninguna de las anteriores
+                                                else:
+                                                    descrError= "ERROR en la linea "+str(i+1)+" (696)> Al arreglo "+str(variable)+" no se le puede asignar ese valor"
+                                                    break
+                                            else:
+                                                descrError= "ERROR en la linea "+str(i+1)+" 608=> La variable "+str(nombre)+" solo puede contener letras minusculas"
+                                                break
                                     else:
                                         descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=)"
                                         break
@@ -802,6 +843,49 @@ class Analizador():
                                                 else:
                                                     descrError= "ERROR en la linea "+str(i+1)+" 752=> La variable "+str(nombre)+" no se le puede asignar ese valor"
                                                     break
+                                        #es una variable de arreglo?
+                                        elif re.search("^[a-z]+\[\d+\]",variable):
+                                            if variable.split("[")[0] in variablesDeclaradas:
+                                                #es una variable numerica?
+                                                if re.search("^[0-9]*.[0-9]*$",asignacion):
+                                                    #print "posible numero"
+                                                    script=script+"var "+variable+" = "+asignacion+";"
+                                                #es una variable de texto
+                                                elif re.search("^\"*.*\"$",asignacion):
+                                                    #print "posible cadena"
+                                                    script=script+"var "+variable+" = '"+asignacion+"';"
+                                                elif asignacion.split("(")[0]=="aritmetica":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+"var "+variable+"="+str(atr)+";"
+                                                elif asignacion.split("(")[0]=="arreglo":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    if len(atr)==0:
+                                                        script+="var "+variable+"=new Array();"
+                                                    else:
+                                                        script+="var "+variable+"=new Array("+str(atr)+");"
+                                                elif asignacion.split("(")[0]=="aleatorio":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                                                elif asignacion.split("(")[0]=="leerDato":
+                                                    atr=asignacion.split("(")[1]
+                                                    atr=atr[0:len(atr)-1]
+                                                    script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                                                elif re.search("^[a-z]+\[\d+\]",asignacion):
+                                                    if asignacion.split("[")[0] in variablesDeclaradas:
+                                                        script=script+str(variable)+"="+str(asignacion)+";"
+                                                    else:
+                                                        descrError= "ERROR en la linea "+str(i+1)+" (692)> Arreglo no declarado"
+                                                        break
+                                                #ninguna de las anteriores
+                                                else:
+                                                    descrError= "ERROR en la linea "+str(i+1)+" (872)> Al arreglo "+str(nombre)+" no se le puede asignar ese valor"
+                                                    break
+                                            else:
+                                                descrError= "ERROR en la linea "+str(i+1)+" (874)> El arreglo "+str(nombre)+" no existe"
+                                                break
                                         else:
                                             descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" solo puede contener letras minusculas"
                                             break
