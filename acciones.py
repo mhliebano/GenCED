@@ -2,7 +2,7 @@
 import sys
 import glib,gtk
 import shutil
-import os, stat,tarfile
+import os, stat,tarfile,json
 from objetos import *
 from analizador import *
 class Acciones:
@@ -11,9 +11,9 @@ class Acciones:
         #self.rutaProyecto=None
         #self.nombreProyecto=None
         #self.hojas=[]
-        self.proyecto=""
+        self.proyecto=None
         self.recursos=[]
-        self.objetos=[]
+        self.objetos={"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivo":[]}
         self.EDITADO=0
         self.puntero=-1
         self.nivel=-1
@@ -630,7 +630,7 @@ class Acciones:
     def nuevoProyecto(self,widget=None,data=None):
         #Si estamos en linux =)
         if str(os.name)== "posix":
-            if self.proyecto!="":
+            if self.proyecto!=None:
                 self.igu.cuadroMensajes("Proyecto Abierto","Ya hay un Proyecto abierto\n por favor cierrelo antes de crear otro",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
                 return
             #print os.getcwd() muestra la ruta donde se ejecuta el main
@@ -640,52 +640,71 @@ class Acciones:
             resp=dialogo.run()
             if resp==gtk.RESPONSE_OK:
                 proyecto=str(dialogo.get_filename())
-                print proyecto
                 dialogo.destroy()
+                print "creo el proyecto en:"+str(proyecto)
+                nmb=proyecto.split("/")
+                print "nombre Proyecto:"+str(nmb[len(nmb)-1])
+                rutaTemporal=str(os.path.dirname(os.path.realpath(__file__)))+"/"+str(nmb[len(nmb)-1])+"TMP"
+                print "lso temporales en "+str(rutaTemporal)
+                try: #trato de crear las carpetas temporales en el path de GENCED
+                    os.mkdir(rutaTemporal)
+                    os.mkdir(os.path.join(rutaTemporal,"recursos/"))
+                    os.mkdir(os.path.join(rutaTemporal,"recursos/imagenes"))
+                    os.mkdir(os.path.join(rutaTemporal,"recursos/sonidos"))
+                    os.mkdir(os.path.join(rutaTemporal,"recursos/videos"))
+                    os.mkdir(os.path.join(rutaTemporal,"recursos/archivos"))
+                    os.mkdir(os.path.join(rutaTemporal,"conf"))
+                except:
+                    md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error al intentar crear los directorios")
+                    md.set_title("Error de Creacion Directorios")
+                    md.run()
+                    md.destroy()
+                    self.igu.statusbar.push("Ocurrio un error al crear los directorios")
+                    return
+                try: #trato de copiar los archivos js a las carpetas temporales del proyecto
+                    destino=os.path.join(rutaTemporal,"recursos/jquery.js")
+                    origen=os.path.join(os.path.dirname(os.path.realpath(__file__)),"recursos/js/jquery.js")
+                    shutil.copy(origen,destino)
+                    destino=os.path.join(rutaTemporal,"recursos/jquery.timer.js")
+                    origen=os.path.join(os.path.dirname(os.path.realpath(__file__)),"recursos/js/jquery.timer.js")
+                    shutil.copy(origen,destino)
+                except:
+                    md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error al intentar copiar los archivos javascript")
+                    md.set_title("Error de Copiado de Archivos")
+                    md.run()
+                    md.destroy()
+                    self.igu.statusbar.push("Ocurrio un error al copiar los archivos de Javascript")
+                    return
+                self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto+".gcd")
+                hoja=Escena(0)
+                self.objetos["Hojas"].append({"objeto":hoja,"hijos":[]})
+                
+                #print self.objetos
+                arc={"Proyecto":{"ancho":str(self.proyecto.ancho),"alto":str(self.proyecto.alto),"maximizado":str(self.proyecto.maximizado)},"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivo":[]},
+                i=0
+                for d in self.objetos["Hojas"]:
+                    i+=1
+                    h= {"hoja"+str(i):[d["objeto"].propiedades()]}
+                    print type(h)
+                    #arc["Hojas"].append(h)
+                
+                print json.dumps(arc)
+                shutil.rmtree(str(rutaTemporal))
+                return
+                
+                
                 if os.path.exists(proyecto):
                     md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ya existe un proyecto con este nombre")
                     md.set_title("Error de Creacion de Proyecto")
                     md.run()
                     md.destroy()
                 else:
-                    nmb=proyecto.split("/")
-                    self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto+".gcd")
-                    proyecto=proyecto+"TMP"
-                    try: #trato de crear las carpetas en el home del usuario
-                        os.mkdir(proyecto)
-                        os.mkdir(proyecto+"/recursos/")
-                        os.mkdir(proyecto+"/recursos/imagenes")
-                        os.mkdir(proyecto+"/recursos/sonidos")
-                        os.mkdir(proyecto+"/recursos/videos")
-                        os.mkdir(proyecto+"/recursos/archivos")
-                        os.mkdir(proyecto+"/conf")
-                    except:
-                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error al intentar crear los directorios")
-                        md.set_title("Error de Creacion Directorios")
-                        md.run()
-                        md.destroy()
-                        self.igu.statusbar.push("Ocurrio un error al crear los directorios")
-                        return
-                    try: #trato de copiar los archivos js a las carpetas del proyecto
-                        destino=proyecto+"/recursos/jquery.js"
-                        origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.js"
-                        shutil.copy(origen,destino)
-                        destino=proyecto+"/recursos/jquery.timer.js"
-                        origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.timer.js"
-                        shutil.copy(origen,destino)
-                    except:
-                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error al intentar copiar los archivos javascript")
-                        md.set_title("Error de Copiado de Archivos")
-                        md.run()
-                        md.destroy()
-                        self.igu.statusbar.push("Ocurrio un error al copiar los archivos de Javascript")
-                        return
+                                      
                     try: #Trato de escribir el archivo de configuracion del proyecto
                         conf=open(proyecto+"/conf/configuracion.txt","a")
                         conf.write("GCEDV1.0"+"\n")
                         conf.write("0\Hoja0\n")
                         #Listas en Memoria de lo que contiene el proyecto hasta Ahora
-                        hoja=Escena(0)
                         conf.write(hoja.propiedades())
                         conf.close()
                     except:
@@ -708,9 +727,9 @@ class Acciones:
                         return
                     tar = tarfile.open(self.proyecto.ruta, "w")
                     carpeta=proyecto.split("/")
-                    tar.add(proyecto,arcname=str(carpeta[len(carpeta)-1]))
+                    tar.add(proyecto,arcname=str(carpeta[len(carpeta)-1][0:-3]))
                     tar.close()
-                    shutil.rmtree(str(proyecto))
+                    
                     self.objetos.append([hoja])
                     self.recursos.append(["imagenes"])
                     self.recursos.append(["sonidos"])
@@ -1271,7 +1290,7 @@ class Acciones:
             archivo=e[len(e)-1]
             if data==0:
                 tar = tarfile.open(str(self.proyecto.ruta), "a")
-                tar.add(dialog.get_filename(),"recursos/imagenes/"+archivo)
+                tar.add(dialog.get_filename(),self.proyecto.nombre+"/recursos/imagenes/"+archivo)
                 tar.close()
             elif data==1:
                 e=dialog.get_filename().split("/")
