@@ -57,7 +57,8 @@ class Escena(object):
         return a
     
     def propiedades(self):
-        return "p\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.imagen)+"\\"+str(self.ajusteImagen)+"\\"+str(self.cuentaObjetos["cuadro"])+","+str(self.cuentaObjetos["circulo"])+","+str(self.cuentaObjetos["triangulo"])+","+str(self.cuentaObjetos["linea"])+","+str(self.cuentaObjetos["imagen"])+","+str(self.cuentaObjetos["texto"])+","+str(self.cuentaObjetos["sonido"])+"\n"
+        return {"colorFondo":str(self.colorFondo),"transparencia":str(self.transparencia),"imagen":str(self.imagen),"ajusteImagen":str(self.ajusteImagen)}
+        #return "p\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.imagen)+"\\"+str(self.ajusteImagen)+"\\"+str(self.cuentaObjetos["cuadro"])+","+str(self.cuentaObjetos["circulo"])+","+str(self.cuentaObjetos["triangulo"])+","+str(self.cuentaObjetos["linea"])+","+str(self.cuentaObjetos["imagen"])+","+str(self.cuentaObjetos["texto"])+","+str(self.cuentaObjetos["sonido"])+"\n"
         
     
     nombre = property(obtenerNombre)
