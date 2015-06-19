@@ -386,7 +386,7 @@ class Analizador():
                                                 #print "Ok es un evento de hoja correcto"
                                                 #"alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"
                                                 if token=="alAbrir":
-                                                    script=script+ "$(window).load(function(){;"
+                                                    script=script+ "$(window).load(function(){"
                                                     abiertoBloque=token
                                                 elif token=="alCerrar":
                                                     script=script+ "$(window).unload(function(){"
@@ -662,11 +662,11 @@ class Analizador():
                                                 #es una variable numerica?
                                                 if re.search("^[0-9]*.[0-9]*$",asignacion):
                                                     #print "posible numero"
-                                                    script=script+"var "+variable+" = "+asignacion+";"
+                                                    script=script+"var "+variable+"="+asignacion+";"
                                                 #es una variable de texto
                                                 elif re.search("^\"*.*\"$",asignacion):
                                                     #print "posible cadena"
-                                                    script=script+"var "+variable+" = '"+asignacion+"';"
+                                                    script=script+"var "+variable+"='"+asignacion+"';"
                                                 elif asignacion.split("(")[0]=="aritmetica":
                                                     atr=asignacion.split("(")[1]
                                                     atr=atr[0:len(atr)-1]
@@ -849,11 +849,11 @@ class Analizador():
                                                 #es una variable numerica?
                                                 if re.search("^[0-9]*.[0-9]*$",asignacion):
                                                     #print "posible numero"
-                                                    script=script+"var "+variable+" = "+asignacion+";"
+                                                    script=script+str(variable)+" = "+asignacion+";"
                                                 #es una variable de texto
                                                 elif re.search("^\"*.*\"$",asignacion):
                                                     #print "posible cadena"
-                                                    script=script+"var "+variable+" = '"+asignacion+"';"
+                                                    script=script+str(variable)+"='"+asignacion+"';"
                                                 elif asignacion.split("(")[0]=="aritmetica":
                                                     atr=asignacion.split("(")[1]
                                                     atr=atr[0:len(atr)-1]
@@ -1215,6 +1215,8 @@ class Analizador():
                                 elif token=="\tmensaje":
                                     parametro=parametro[0:len(parametro)-1]
                                     if parametro in variablesDeclaradas:
+                                        script=script+"alert("+parametro+");"
+                                    elif re.search("^[a-z]+\[\d+\]$",parametro):
                                         script=script+"alert("+parametro+");"
                                     else:
                                         script=script+"alert('"+parametro+"');"
