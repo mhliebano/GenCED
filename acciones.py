@@ -2,7 +2,7 @@
 import sys
 import glib,gtk
 import shutil
-import os, stat
+import os, stat,tarfile
 from objetos import *
 from analizador import *
 class Acciones:
@@ -69,7 +69,7 @@ class Acciones:
         if self.proyecto=="":
             self.igu.cuadroMensajes("Proyecto Cerrado","Debe Abrir un proyecto primero antes de importar",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
             return
-        response=self.igu.cuadroDialogo("Abrir Proyecto",gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+        response=self.igu.cuadroDialogo("Abrir Proyecto",gtk.FILE_CHOOSER_ACTION_OPEN,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
         if response[0] == gtk.RESPONSE_OK:
             proyecto=str(response[1])+"/conf/configuracion.txt"
             if os.path.isfile(proyecto):
@@ -640,6 +640,7 @@ class Acciones:
             resp=dialogo.run()
             if resp==gtk.RESPONSE_OK:
                 proyecto=str(dialogo.get_filename())
+                print proyecto
                 dialogo.destroy()
                 if os.path.exists(proyecto):
                     md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ya existe un proyecto con este nombre")
@@ -648,7 +649,8 @@ class Acciones:
                     md.destroy()
                 else:
                     nmb=proyecto.split("/")
-                    self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto)
+                    self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto+".gcd")
+                    proyecto=proyecto+"TMP"
                     try: #trato de crear las carpetas en el home del usuario
                         os.mkdir(proyecto)
                         os.mkdir(proyecto+"/recursos/")
@@ -665,10 +667,10 @@ class Acciones:
                         self.igu.statusbar.push("Ocurrio un error al crear los directorios")
                         return
                     try: #trato de copiar los archivos js a las carpetas del proyecto
-                        destino=self.proyecto.ruta+"/recursos/jquery.js"
+                        destino=proyecto+"/recursos/jquery.js"
                         origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.js"
                         shutil.copy(origen,destino)
-                        destino=self.proyecto.ruta+"/recursos/jquery.timer.js"
+                        destino=proyecto+"/recursos/jquery.timer.js"
                         origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/js/jquery.timer.js"
                         shutil.copy(origen,destino)
                     except:
@@ -704,6 +706,11 @@ class Acciones:
                         md.destroy()
                         self.igu.statusbar.push("Ocurrio un error crear el archivo de escritos")
                         return
+                    tar = tarfile.open(self.proyecto.ruta, "w")
+                    carpeta=proyecto.split("/")
+                    tar.add(proyecto,arcname=str(carpeta[len(carpeta)-1]))
+                    tar.close()
+                    shutil.rmtree(str(proyecto))
                     self.objetos.append([hoja])
                     self.recursos.append(["imagenes"])
                     self.recursos.append(["sonidos"])
@@ -845,284 +852,280 @@ class Acciones:
         if self.proyecto!="":
             self.igu.cuadroMensajes("Proyecto Abierto","Ya hay un Proyecto abierto\n por favor cierrelo antes de abrir otro",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
             return
-        response=self.igu.cuadroDialogo("Abrir Proyecto",gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+        response=self.igu.cuadroDialogo("Abrir Proyecto",gtk.FILE_CHOOSER_ACTION_OPEN,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
         if response[0] == gtk.RESPONSE_OK:
-            proyecto=str(response[1])+"/conf/configuracion.txt"
-            if os.path.isfile(proyecto):
-                conf=open(proyecto,"r")
-                linea = conf.readline()[:-1]
-                if linea!="GCEDV1.0":
-                    self.igu.cuadroMensajes("Error Apertura de Proyecto","Este no es un Proyecto de CED",gtk.MESSAGE_WARNING,gtk.BUTTONS_CLOSE)
-                    return
-                nmb=response[1].split("/")
-                self.proyecto=Proyecto(nmb[len(nmb)-1],response[1])
-                #self.rutaProyecto=
-                #self.nombreProyecto=response[1]
-                self.recursos.append(["imagenes"])
-                self.recursos.append(["sonidos"])
-                self.recursos.append(["videos"])
-                self.recursos.append(["archivos"])
-                i=0
-                ind=-1
-                while linea != "":
-                    linea = conf.readline()[:-1]
-                    x=linea.split("\\")
-                    if x[0]=="pr":
-                        self.proyecto.ancho=x[1]
-                        self.proyecto.alto=x[2]
-                        self.proyecto.maximizado=x[3]
-                    if x[0]=="0":
-                        hoja=Escena(len(self.objetos))
-                        ind=ind+1
-                        self.proyecto.paginas.append("")
-                    if x[0]=="p":
-                        hoja.colorFondo=x[1]
-                        hoja.transparencia=x[2]
-                        hoja.imagen=x[3]
-                        hoja.ajusteImagen=x[4]
-                        esc=open(self.proyecto.ruta+"/conf/escrito"+str(ind)+".gcd","r")
-                        contenido=esc.read()
-                        dupla=contenido.split("[s]")
-                        esc.close()
-                        hoja.escritos=dupla[0]
-                        hoja.javascript=dupla[1]
-                        self.objetos.append([hoja])
-                    if x[0]=="c":
-                        obj=Cuadro(self.objetos[ind][0].cuentaObjetos["cuadro"])
-                        self.objetos[ind][0].cuentaObjetos["cuadro"]=int(self.objetos[ind][0].cuentaObjetos["cuadro"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.borde=x[7]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="o":
-                        obj=Circulo(self.objetos[ind][0].cuentaObjetos["circulo"])
-                        self.objetos[ind][0].cuentaObjetos["circulo"]=int(self.objetos[ind][0].cuentaObjetos["circulo"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.borde=x[7]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.radio=x[15]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="t":
-                        obj=Triangulo(self.objetos[ind][0].cuentaObjetos["triangulo"])
-                        self.objetos[ind][0].cuentaObjetos["triangulo"]=int(self.objetos[ind][0].cuentaObjetos["triangulo"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.borde=x[7]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="i":
-                        obj=Imagen(self.objetos[ind][0].cuentaObjetos["imagen"])
-                        self.objetos[ind][0].cuentaObjetos["imagen"]=int(self.objetos[ind][0].cuentaObjetos["imagen"])+1
-                        obj.transparencia=x[1]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.borde=x[7]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.imagen=x[15]
-                        obj.clip=x[16]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="l":
-                        obj=Linea(self.objetos[ind][0].cuentaObjetos["linea"])
-                        self.objetos[ind][0].cuentaObjetos["linea"]=int(self.objetos[ind][0].cuentaObjetos["linea"])+1
-                        obj.ancho=x[3]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.borde=x[7]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra==x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                        
-                    if x[0]=="x":
-                        obj=Texto(self.objetos[ind][0].cuentaObjetos["texto"])
-                        self.objetos[ind][0].cuentaObjetos["texto"]=int(self.objetos[ind][0].cuentaObjetos["texto"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.borde=x[7]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.texto=x[15]
-                        obj.tamanoTexto=x[16]
-                        obj.colorTexto=x[17]
-                        obj.fuente=x[18]
-                        obj.alineacion=x[19]
-                        obj.parrafo=x[20]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="b":
-                        obj=Boton(self.objetos[ind][0].cuentaObjetos["boton"])
-                        self.objetos[ind][0].cuentaObjetos["boton"]=int(self.objetos[ind][0].cuentaObjetos["boton"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.texto=x[15]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="e":
-                        obj=Entrada(self.objetos[ind][0].cuentaObjetos["entrada"])
-                        self.objetos[ind][0].cuentaObjetos["entrada"]=int(self.objetos[ind][0].cuentaObjetos["entrada"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.texto=x[15]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="s":
-                        obj=Lista(self.objetos[ind][0].cuentaObjetos["lista"])
-                        self.objetos[ind][0].cuentaObjetos["lista"]=int(self.objetos[ind][0].cuentaObjetos["lista"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.lista=x[15]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="k":
-                        obj=Check(self.objetos[ind][0].cuentaObjetos["check"])
-                        self.objetos[ind][0].cuentaObjetos["check"]=int(self.objetos[ind][0].cuentaObjetos["check"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.valor=x[15]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="r":
-                        obj=Area(self.objetos[ind][0].cuentaObjetos["area"])
-                        self.objetos[ind][0].cuentaObjetos["area"]=int(self.objetos[ind][0].cuentaObjetos["area"])+1
-                        obj.colorFondo=x[1]
-                        obj.transparencia=x[2]
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.colorBorde=x[8]
-                        obj.anchoBorde=x[9]
-                        obj.sombra=x[10]
-                        obj.rotar=x[11]
-                        obj.oculto=x[12]
-                        obj.texto=x[15]
-                        obj.tip=x[13]
-                        obj.etiqueta=x[14]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="m":
-                        obj=Sonido(self.objetos[ind][0].cuentaObjetos["sonido"])
-                        self.objetos[ind][0].cuentaObjetos["sonido"]=int(self.objetos[ind][0].cuentaObjetos["sonido"])+1
-                        obj.sonido=x[15]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="v":
-                        obj=Video(self.objetos[ind][0].cuentaObjetos["video"])
-                        self.objetos[ind][0].cuentaObjetos["video"]=int(self.objetos[ind][0].cuentaObjetos["video"])+1
-                        obj.ancho=x[3]
-                        obj.alto=x[4]
-                        obj.x=x[5]
-                        obj.y=x[6]
-                        obj.video=x[15]
-                        self.objetos[ind].append(obj)
-                    if x[0]=="1":
-                        self.recursos[0].append(x[1])
-                    if x[0]=="2":
-                        self.recursos[1].append(x[1])
-                    if x[0]=="3":
-                        self.recursos[2].append(x[1])
-                    if x[0]=="4":
-                        self.recursos[3].append(x[1])
-                conf.close()
-                self.actualizaArbol()
-                self.igu.barraHojaNueva.set_sensitive(True)
-                self.igu.barraImagenNuevo.set_sensitive(True)
-                self.igu.barraSonidoNuevo.set_sensitive(True)
-                self.igu.barraVideoNuevo.set_sensitive(True)
-                self.igu.barraArchivoNuevo.set_sensitive(True)
-                self.igu.cer.set_sensitive(True)
-            else:
+            tar = tarfile.open(str(response[1]), "r")
+            nmb=response[1].split("/")
+            archivo=tar.getmember(nmb[len(nmb)-1][0:-4]+"/conf/configuracion.txt")
+            conf=tar.extractfile(archivo)
+            linea = conf.readline()[:-1]
+            if linea!="GCEDV1.0":
                 self.igu.cuadroMensajes("Error Apertura de Proyecto","Este no es un Proyecto de CED",gtk.MESSAGE_WARNING,gtk.BUTTONS_CLOSE)
+                return
+            nmb=response[1].split("/")
+            self.proyecto=Proyecto(nmb[len(nmb)-1][0:-4],response[1])
+            self.recursos.append(["imagenes"])
+            self.recursos.append(["sonidos"])
+            self.recursos.append(["videos"])
+            self.recursos.append(["archivos"])
+            i=0
+            ind=-1
+            while linea != "":
+                linea = conf.readline()[:-1]
+                x=linea.split("\\")
+                if x[0]=="pr":
+                    self.proyecto.ancho=x[1]
+                    self.proyecto.alto=x[2]
+                    self.proyecto.maximizado=x[3]
+                if x[0]=="0":
+                    hoja=Escena(len(self.objetos))
+                    ind=ind+1
+                    self.proyecto.paginas.append("")
+                if x[0]=="p":
+                    hoja.colorFondo=x[1]
+                    hoja.transparencia=x[2]
+                    hoja.imagen=x[3]
+                    hoja.ajusteImagen=x[4]
+                    archivo=tar.getmember(nmb[len(nmb)-1][0:-4]+"/conf/escrito"+str(ind)+".gcd")
+                    contenido=tar.extractfile(archivo).read()
+                    dupla=contenido.split("[s]")
+                    hoja.escritos=dupla[0]
+                    hoja.javascript=dupla[1]
+                    self.objetos.append([hoja])
+                if x[0]=="c":
+                    obj=Cuadro(self.objetos[ind][0].cuentaObjetos["cuadro"])
+                    self.objetos[ind][0].cuentaObjetos["cuadro"]=int(self.objetos[ind][0].cuentaObjetos["cuadro"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.borde=x[7]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="o":
+                    obj=Circulo(self.objetos[ind][0].cuentaObjetos["circulo"])
+                    self.objetos[ind][0].cuentaObjetos["circulo"]=int(self.objetos[ind][0].cuentaObjetos["circulo"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.borde=x[7]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.radio=x[15]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="t":
+                    obj=Triangulo(self.objetos[ind][0].cuentaObjetos["triangulo"])
+                    self.objetos[ind][0].cuentaObjetos["triangulo"]=int(self.objetos[ind][0].cuentaObjetos["triangulo"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.borde=x[7]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="i":
+                    obj=Imagen(self.objetos[ind][0].cuentaObjetos["imagen"])
+                    self.objetos[ind][0].cuentaObjetos["imagen"]=int(self.objetos[ind][0].cuentaObjetos["imagen"])+1
+                    obj.transparencia=x[1]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.borde=x[7]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.imagen=x[15]
+                    obj.clip=x[16]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="l":
+                    obj=Linea(self.objetos[ind][0].cuentaObjetos["linea"])
+                    self.objetos[ind][0].cuentaObjetos["linea"]=int(self.objetos[ind][0].cuentaObjetos["linea"])+1
+                    obj.ancho=x[3]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.borde=x[7]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra==x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                    
+                if x[0]=="x":
+                    obj=Texto(self.objetos[ind][0].cuentaObjetos["texto"])
+                    self.objetos[ind][0].cuentaObjetos["texto"]=int(self.objetos[ind][0].cuentaObjetos["texto"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.borde=x[7]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.texto=x[15]
+                    obj.tamanoTexto=x[16]
+                    obj.colorTexto=x[17]
+                    obj.fuente=x[18]
+                    obj.alineacion=x[19]
+                    obj.parrafo=x[20]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="b":
+                    obj=Boton(self.objetos[ind][0].cuentaObjetos["boton"])
+                    self.objetos[ind][0].cuentaObjetos["boton"]=int(self.objetos[ind][0].cuentaObjetos["boton"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.texto=x[15]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="e":
+                    obj=Entrada(self.objetos[ind][0].cuentaObjetos["entrada"])
+                    self.objetos[ind][0].cuentaObjetos["entrada"]=int(self.objetos[ind][0].cuentaObjetos["entrada"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.texto=x[15]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="s":
+                    obj=Lista(self.objetos[ind][0].cuentaObjetos["lista"])
+                    self.objetos[ind][0].cuentaObjetos["lista"]=int(self.objetos[ind][0].cuentaObjetos["lista"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.lista=x[15]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="k":
+                    obj=Check(self.objetos[ind][0].cuentaObjetos["check"])
+                    self.objetos[ind][0].cuentaObjetos["check"]=int(self.objetos[ind][0].cuentaObjetos["check"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.valor=x[15]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="r":
+                    obj=Area(self.objetos[ind][0].cuentaObjetos["area"])
+                    self.objetos[ind][0].cuentaObjetos["area"]=int(self.objetos[ind][0].cuentaObjetos["area"])+1
+                    obj.colorFondo=x[1]
+                    obj.transparencia=x[2]
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.colorBorde=x[8]
+                    obj.anchoBorde=x[9]
+                    obj.sombra=x[10]
+                    obj.rotar=x[11]
+                    obj.oculto=x[12]
+                    obj.texto=x[15]
+                    obj.tip=x[13]
+                    obj.etiqueta=x[14]
+                    self.objetos[ind].append(obj)
+                if x[0]=="m":
+                    obj=Sonido(self.objetos[ind][0].cuentaObjetos["sonido"])
+                    self.objetos[ind][0].cuentaObjetos["sonido"]=int(self.objetos[ind][0].cuentaObjetos["sonido"])+1
+                    obj.sonido=x[15]
+                    self.objetos[ind].append(obj)
+                if x[0]=="v":
+                    obj=Video(self.objetos[ind][0].cuentaObjetos["video"])
+                    self.objetos[ind][0].cuentaObjetos["video"]=int(self.objetos[ind][0].cuentaObjetos["video"])+1
+                    obj.ancho=x[3]
+                    obj.alto=x[4]
+                    obj.x=x[5]
+                    obj.y=x[6]
+                    obj.video=x[15]
+                    self.objetos[ind].append(obj)
+                if x[0]=="1":
+                    self.recursos[0].append(x[1])
+                if x[0]=="2":
+                    self.recursos[1].append(x[1])
+                if x[0]=="3":
+                    self.recursos[2].append(x[1])
+                if x[0]=="4":
+                    self.recursos[3].append(x[1])
+            tar.close()
+            self.actualizaArbol()
+            self.igu.barraHojaNueva.set_sensitive(True)
+            self.igu.barraImagenNuevo.set_sensitive(True)
+            self.igu.barraSonidoNuevo.set_sensitive(True)
+            self.igu.barraVideoNuevo.set_sensitive(True)
+            self.igu.barraArchivoNuevo.set_sensitive(True)
+            self.igu.cer.set_sensitive(True)
         elif response[0] == gtk.RESPONSE_CANCEL:
             print 'Closed, no files selected'
      
@@ -1264,12 +1267,12 @@ class Acciones:
         dialog.add_filter(filtro)
         response = dialog.run()
         if response == gtk.RESPONSE_OK:
+            e=dialog.get_filename().split("/")
+            archivo=e[len(e)-1]
             if data==0:
-                e=dialog.get_filename().split("/")
-                archivo=e[len(e)-1]
-                destino=self.proyecto.ruta+"/recursos/imagenes/"+archivo
-                origen=dialog.get_filename()
-                shutil.copy(origen,destino)
+                tar = tarfile.open(str(self.proyecto.ruta), "a")
+                tar.add(dialog.get_filename(),"recursos/imagenes/"+archivo)
+                tar.close()
             elif data==1:
                 e=dialog.get_filename().split("/")
                 archivo=e[len(e)-1]
@@ -1290,7 +1293,7 @@ class Acciones:
                 shutil.copy(origen,destino)
             self.recursos[data].append(archivo)
             self.actualizaArbol()
-            self.guardarProyecto()
+            #self.guardarProyecto()
         elif response == gtk.RESPONSE_CANCEL:
             print 'Closed, no files selected'
         dialog.destroy()
