@@ -7,7 +7,9 @@ import os
 ruta= os.path.dirname(os.path.realpath(__file__))
 
 class Analizador():
-    def __init__(self,objetos,recursos):
+    def __init__(self,objetos,escena):
+        self.__objetos=objetos
+        self.__escena=escena
         eventosEscena=["alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
         self.window=gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -34,21 +36,19 @@ class Analizador():
         txtScript.set_border_window_size(gtk.TEXT_WINDOW_RIGHT, 24)
         txtScript.connect("expose-event", self._pintaNumeros,cntScript,txtScript)
         #txtScript.connect("key-press-event",self.analizador,cntScript,objetos)
-        cntScript.set_text(objetos[0].escritos)
-        barraSCAN.connect("clicked",self.analizador,cntScript,objetos,recursos)
+        cntScript.set_text(escena.escritos)
+        barraSCAN.connect("clicked",self.analizador,cntScript)
         lista=gtk.TreeStore(str,gtk.gdk.Pixbuf)
         padre=lista.append(None,["Sistema",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/sistema.png'))])
         f=lista.append(padre,["cicloSistema",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/ciclo.png'))])
         f=lista.append(padre,["cronometroSistema",gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/ciclo.png'))])
+        padre=lista.append(None,[escena.nombre,gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/hoja.png'))])
+        for n in range(len(eventosEscena)):
+            f=lista.append(padre,[eventosEscena[n],gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/evento.png'))])
         for i in range(len(objetos)):
-            if i==0:
-                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/hoja.png'))])
-                for n in range(len(eventosEscena)):
-                    f=lista.append(padre,[eventosEscena[n],gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/evento.png'))])
-            else:
-                padre=lista.append(None,[objetos[i].nombre,gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/objeto.png'))])
-                for n in range(len(eventosObjetos)):
-                    f=lista.append(padre,[eventosObjetos[n],gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/evento.png'))])
+            padre=lista.append(None,[objetos[i]["objeto"].nombre,gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/objeto.png'))])
+            for n in range(len(eventosObjetos)):
+                f=lista.append(padre,[eventosObjetos[n],gtk.gdk.pixbuf_new_from_file(os.path.join(ruta,'iconos/evento.png'))])
         listaObjetos = gtk.TreeView()
         listaObjetos.set_model(lista)
         lacolumna = gtk.TreeViewColumn("Objetos")
@@ -175,8 +175,141 @@ class Analizador():
             base=base + lineaCodigo
             self.barraEstado.push(0,str(mod[ite[0]][0])+"->"+str(mod[iterador[0]][0])+":"+str(iterador[0]))
             escrito.set_text(base)
-    
-    def analizador(self,widget,data=None,objetos=None,recursos=None):
+
+    def __tipoLinea(self,linea):
+        eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
+        eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
+        variablesValidas=["varg","\tvarl","\tvarg"]
+        if re.search("^\t",linea):
+            resultado= (0,1,"Elemento de bloque")
+        else:
+            token=linea.split("->")[0]
+            nombre=linea.split("->")[1]
+            if token in variablesValidas:
+                resultado=self.__analisaVarible(token,nombre,"fuera")
+            elif token in eventosValidos:
+                pass
+            elif token in eventosObjetos:
+                pass
+            elif token=="func":
+                pass
+            else:
+                resultado= (0,0,None)
+        return resultado
+            
+    def __analisaVarible(self,token,nombre,contexto):
+        #tiene asignacion explicita?
+        if re.search("=",nombre):
+            print nombre
+            variable=nombre.split("=")[0]
+            asignacion=nombre.split("=")[1]
+            #contiene solo letras minusculas?
+            if re.search("^[a-z]*$",variable):
+                #esta vacia la asignacion
+                if asignacion==None:
+                    return (0,1,None)
+                #es una variable numerica?
+                elif re.search("^[0-9]*.[0-9]*$",asignacion):
+                    #print "posible numero"
+                    if contexto=="fuera":
+                        t="var "+variable+" = "+asignacion+";"
+                    else:
+                        t=variable+" = "+asignacion+";"
+                #es una variable de texto
+                elif re.search("^\"*.*\"$",asignacion):
+                    #print "posible cadena"
+                    if contexto=="fuera":
+                        t="var "+variable+" = '"+asignacion+"';"
+                    else:
+                        t=variable+" = '"+asignacion+"';"
+                elif asignacion.split("(")[0]=="aritmetica":
+                        atr=asignacion.split("(")[1]
+                        atr=atr[0:len(atr)-1]
+                        if contexto=="fuera":
+                            t="var "+variable+"="+str(atr)+";"
+                        else:
+                            t=variable+"="+str(atr)+";"
+                elif asignacion.split("(")[0]=="arreglo":
+                    atr=asignacion.split("(")[1]
+                    atr=atr[0:len(atr)-1]
+                    if len(atr)==0:
+                        if contexto=="fuera":
+                            t="var "+variable+"=new Array();"
+                        else:
+                            t=variable+"=new Array();"
+                    else:
+                        if contexto=="fuera":
+                            t="var "+variable+"=new Array("+str(atr)+");"
+                        else:
+                            t=variable+"=new Array("+str(atr)+");"
+                elif asignacion.split("(")[0]=="aleatorio":
+                    atr=asignacion.split("(")[1]
+                    atr=atr[0:len(atr)-1]
+                    if contexto=="fuera":
+                        t="var "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                    else:
+                        t=variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                elif asignacion.split("(")[0]=="leerDato":
+                    atr=asignacion.split("(")[1]
+                    atr=atr[0:len(atr)-1]
+                    if contexto=="fuera":
+                        t="var "+str(variable)+"=sessionStorage."+str(atr)+";"
+                    else:
+                        t=str(variable)+"=sessionStorage."+str(atr)+";"
+                #ninguna de las anteriores
+                else:
+                    return (0,2,None)
+                return (1,0,t) 
+            #es una variable de arreglo?
+            elif re.search("^[a-z]+\[\d+\]",variable):
+                if variable.split("[")[0] in variablesDeclaradas:
+                    #es una variable numerica?
+                    if re.search("^[0-9]*.[0-9]*$",asignacion):
+                        #print "posible numero"
+                        script=script+"var "+variable+" = "+asignacion+";"
+                    #es una variable de texto
+                    elif re.search("^\"*.*\"$",asignacion):
+                        #print "posible cadena"
+                        script=script+"var "+variable+" = '"+asignacion+"';"
+                    elif asignacion.split("(")[0]=="aritmetica":
+                        atr=asignacion.split("(")[1]
+                        atr=atr[0:len(atr)-1]
+                        script=script+"var "+variable+"="+str(atr)+";"
+                    elif asignacion.split("(")[0]=="arreglo":
+                        atr=asignacion.split("(")[1]
+                        atr=atr[0:len(atr)-1]
+                        if len(atr)==0:
+                            script+="var "+variable+"=new Array();"
+                        else:
+                            script+="var "+variable+"=new Array("+str(atr)+");"
+                    elif asignacion.split("(")[0]=="aleatorio":
+                        atr=asignacion.split("(")[1]
+                        atr=atr[0:len(atr)-1]
+                        script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                    elif asignacion.split("(")[0]=="leerDato":
+                        atr=asignacion.split("(")[1]
+                        atr=atr[0:len(atr)-1]
+                        script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                    #ninguna de las anteriores
+                    else:
+                        descrError= "ERROR en la linea "+str(i+1)+" (311)> Al arreglo "+str(nombre)+" no se le puede asignar ese valor"
+                else:
+                    descrError= "ERROR en la linea "+str(i+1)+" (314)=> La asignacion "+str(nombre)+" no pertenece a un arreglo"
+            #no tiene solo letras minusculas
+            else:
+                return (0,4,None)
+        #No esta asignada
+        else:
+            return (0,3,None)
+            
+
+    def analizador(self,widget,data=None):
+        errores=["No se Reconoce la linea",
+        "La variable requiere de una asignacion (=) no vacia",
+        "La variable no se le puede asignar ese valor",
+        "La variable requiere de una asignacion (=)",
+        "La variable solo puede contener letras minusculas"]
+        tipoLinea=["variable"]
         eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
         eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
         elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\tvideo","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro","\tarreglo"]
@@ -186,8 +319,8 @@ class Analizador():
         colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
         bordes={"punteado":"dotted","discontinuo":"dashed","solido":"solid","doble":"double","acanalado":"groove","corrugado":"ridge","relieve bajo":"inset","relieve alto":"outset"}
         atributosOb={"colorFondo":"background-color","transparencia":"transparency","ancho":"width","alto":"height","x":"left","y":"top","borde":"border-style","colorBorde":"borderTopColor","anchoBorde":"border-width","sombra":"shadow","rotar":"-webkit-transform:rotate","oculto":"hidden","texto":"text","imagen":"src"}
-        obje=objetos
-        recu=recursos
+        obje=self.__objetos
+        esce=self.__escena
         
         ini,fin=data.get_bounds()
         lineas=data.get_line_count()+1
@@ -210,1305 +343,24 @@ class Analizador():
             if ncr>0:#esto es para evitar el molestoso aborto de gtk cuando las linea esta vacia
                 p2=data.get_iter_at_line_offset(i,ncr)
                 linea = data.get_text(p1,p2)
-                #print "linea "+str(i+1)+": "+linea
-                if inicioLinea:
-                    if re.search("^\t",linea):
-                        descrError= "ERROR en la linea "+str(i+1)+"=> La linea no Admite 'tab' al inicio"
-                        break
+                if linea!="":
+                    print "linea "+str(i+1)+": "+linea
+                    r=self.__tipoLinea(linea)
+                    if r[0]==0:
+                        print errores[r[1]]
                     else:
-                        if re.search("->",linea):
-                            token=linea.split("->")[0]
-                            nombre=linea.split("->")[1]
-                            #es una variable?
-                            if token in variablesValidas:
-                                #esta asignada?
-                                if re.search("=",nombre):
-                                    variable=nombre.split("=")[0]
-                                    asignacion=nombre.split("=")[1]
-                                    print variable
-                                    #contiene solo letras minusculas?
-                                    if re.search("^[a-z]*$",variable):
-                                        #Puedo declarar variables aqui?
-                                        if declaracionVariables:
-                                            #Ya fue declarada?
-                                            if nombre in variablesDeclaradas:
-                                                descrError="ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" ya fue declarada"
-                                                break
-                                            #No ha sido declarada
-                                            else:
-                                                variablesDeclaradas.append(variable)
-                                                #esta vacia la asignacion
-                                                if asignacion=="":
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=) no vacia"
-                                                    break
-                                                #es una variable numerica?
-                                                elif re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    #print "posible numero"
-                                                    script=script+"var "+variable+" = "+asignacion+";"
-                                                #es una variable de texto
-                                                elif re.search("^\"*.*\"$",asignacion):
-                                                    #print "posible cadena"
-                                                    script=script+"var "+variable+" = '"+asignacion+"';"
-                                                elif asignacion.split("(")[0]=="aritmetica":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+"var "+variable+"="+str(atr)+";"
-                                                elif asignacion.split("(")[0]=="arreglo":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    if len(atr)==0:
-                                                        script+="var "+variable+"=new Array();"
-                                                    else:
-                                                        script+="var "+variable+"=new Array("+str(atr)+");"
-                                                elif asignacion.split("(")[0]=="aleatorio":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
-
-                                                elif asignacion.split("(")[0]=="leerDato":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+str(variable)+"=sessionStorage."+str(atr)+";"
-                                                #ninguna de las anteriores
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+" 273=> La variable "+str(nombre)+" no se le puede asignar ese valor"
-                                                    break
-                                        #estoy fuera de la declaracion de variables
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" no se puede declarar en este contexto"
-                                            break
-                                    #es una variable de arreglo?
-                                    elif re.search("^[a-z]+\[\d+\]",variable):
-                                        if variable.split("[")[0] in variablesDeclaradas:
-                                            #es una variable numerica?
-                                            if re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                #print "posible numero"
-                                                script=script+"var "+variable+" = "+asignacion+";"
-                                            #es una variable de texto
-                                            elif re.search("^\"*.*\"$",asignacion):
-                                                #print "posible cadena"
-                                                script=script+"var "+variable+" = '"+asignacion+"';"
-                                            elif asignacion.split("(")[0]=="aritmetica":
-                                                atr=asignacion.split("(")[1]
-                                                atr=atr[0:len(atr)-1]
-                                                script=script+"var "+variable+"="+str(atr)+";"
-                                            elif asignacion.split("(")[0]=="arreglo":
-                                                atr=asignacion.split("(")[1]
-                                                atr=atr[0:len(atr)-1]
-                                                if len(atr)==0:
-                                                    script+="var "+variable+"=new Array();"
-                                                else:
-                                                    script+="var "+variable+"=new Array("+str(atr)+");"
-                                            elif asignacion.split("(")[0]=="aleatorio":
-                                                atr=asignacion.split("(")[1]
-                                                atr=atr[0:len(atr)-1]
-                                                script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
-                                            elif asignacion.split("(")[0]=="leerDato":
-                                                atr=asignacion.split("(")[1]
-                                                atr=atr[0:len(atr)-1]
-                                                script=script+str(variable)+"=sessionStorage."+str(atr)+";"
-                                            #ninguna de las anteriores
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+" (311)> Al arreglo "+str(nombre)+" no se le puede asignar ese valor"
-                                                break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+" (314)=> La asignacion "+str(nombre)+" no pertenece a un arreglo"
-                                            break
-                                    #no tiene solo letras minusculas
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+" (318)=> La variable "+str(variable)+" solo puede contener letras minusculas"
-                                        break
-                                #No esta asignada
-                                else:
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=)"
-                                    break
-                            #es un evento de Hoja o de sistema?
-                            elif token in eventosValidos:
-                                declaracionVariables=False
-                                inicioLinea=False
-                                #es el nombre Sistema?
-                                if re.search("^Sistema",nombre):
-                                    #termina en :?
-                                    if nombre[-1]==":":
-                                        #Se abrio (?:
-                                        if nombre[7]=="(":
-                                            #se cerro el )?
-                                            if nombre[-2]==")":
-                                                #el argumento es un numero entero?
-                                                if nombre[8:-2].isdigit():
-                                                    #es mayor de 100?
-                                                    if int(nombre[8:-2])>99:
-                                                        #Que tipo evento de sistema es?
-                                                        if token==eventosValidos[0]:
-                                                            #print "Ok evento de sistema tipo cronometro"
-                                                            t=nombre[8:-2]
-                                                            script=script+ "var crono"+str(cron)+" = $.timer(function() {"
-                                                            abiertoBloque="cronometroSistema"
-                                                            cron+=1
-                                                        else:
-                                                            #Ya hay un ciclo de sistema?
-                                                            if "ciclo" in variablesDeclaradas:
-                                                                descrError= "ERROR en la linea "+str(i+1)+"=> Solo se puede declarar un solo cicloSistema"
-                                                                break
-                                                            else:
-                                                                variablesDeclaradas.append("ciclo")
-                                                                abiertoBloque="cicloSistema"
-                                                                script=script +"var timer = $.timer(function() {"
-                                                                #print "Ok evento de sistema tipo ciclo"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El argumento del ciclo debe ser mayor a 50"
-                                                        break
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El argumento del ciclo debe ser un numero entero"
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El argumento debe finalizar con )"
-                                                break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El argumento iniciar con ("
-                                            break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
-                                        break
-                                #Es el nombre Hoja?
-                                elif re.search("^Hoja",nombre):
-                                    #Es la hoja correcta?
-                                    if nombre[0:len(nombre)-1]==str(obje[0].nombre):
-                                        #Termina la linea con :
-                                        if nombre[-1]==":":
-                                            #Ya se ha declarado el evento de hoja?
-                                            if token in variablesDeclaradas:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El evento de Hoja ya fue declarado"
-                                                break
-                                            else:
-                                                variablesDeclaradas.append(token)
-                                                abiertoBloque=str(token)
-                                                #print "Ok es un evento de hoja correcto"
-                                                #"alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"
-                                                if token=="alAbrir":
-                                                    script=script+ "$(window).load(function(){"
-                                                    abiertoBloque=token
-                                                elif token=="alCerrar":
-                                                    script=script+ "$(window).unload(function(){"
-                                                    abiertoBloque=token
-                                                elif token =="alPresionarTecla":
-                                                    script=script+ "$(document).keypress(function(e){"
-                                                    abiertoBloque=token
-                                                elif token =="alSoltarTecla":
-                                                    script=script+ "$(window).keyup(function(e){"
-                                                    abiertoBloque=token
-                                                elif token =="alPulsarTecla":
-                                                    script=script+ "$(document).keydown(function(e){"
-                                                    teclas=True
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Estas Funciones aun no estan implementadas"
-                                                    break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
-                                            break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Esta hoja no existe"
-                                else:
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(nombre[-1])+" No existe"
-                                    break
-                            #es un evento de Objeto?
-                            elif token in eventosObjetos:
-                                declaracionVariables=False
-                                inicioLinea=False
-                                nm=False
-                                #el objeto existe realmente?
-                                for i in range(len(obje)):
-                                    if nombre[0:-1] == obje[i].nombre:
-                                        #print nombre[0:-1]
-                                        nm=True
-                                        break
-                                if nm==True:
-                                    #termina la linea con :?
-                                    if nombre[-1] == ":":
-                                        #Tiene algun caracter extraño?
-                                        #print nombre[0:-1]
-                                        if re.search("^[a-zA-Z0-9]*$",nombre[0:-1]):
-                                            #termina con un numero?
-                                            if re.search("[0-9]$",nombre[0:-1]):
-                                                #empieza con una letra Mayuscula?
-                                                if re.search("^[A-Z]",nombre[0:-1]):
-                                                    #el resto es minusculas?
-                                                    if re.search("^[A-Z].[^A-Z]",nombre[0:-1]):
-                                                        #print "Ok el objeto es correcto"
-                                                        #"click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"
-                                                        abiertoBloque=token
-                                                        if token=="click":
-                                                            script=script+ "$('#"+str(nombre[0:-1])+"').click(function(){"
-                                                        elif token=="dobleClick":
-                                                            script=script+ "$('#"+str(nombre[0:-1])+"').dblclick(function(){"
-                                                        elif token=="ratonSobre":
-                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mouseover(function(){"
-                                                        elif token=="ratonFuera":
-                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mouseout(function(){"
-                                                        elif token=="ratonPresionado":
-                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mousedown(function(){"
-                                                        elif token=="ratonLiberado":
-                                                            script=script+ "$('#"+str(nombre[0:-1])+"').mouseup(function(){"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El nombre del objeto "+str(nombre[-1])+" solo de contener la primera letra en Mayuscula"
-                                                        break
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El nombre del objeto "+str(nombre[-1])+" debe iniciar con letra mayuscula"
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El nombre del objeto "+str(nombre[-1])+" debe culminar en un numero"
-                                                break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El nombre del objeto "+str(nombre[-1])+" no debe contener caracteres especiales"
-                                            break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
-                                        break
-                                else:
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> El objeto NO EXISTE"
-                                    break
-                            #es una funcion?
-                            elif token=="func":
-                                if nombre[-1] == ":":
-                                    nombre=nombre[0:-1]
-                                    if nombre.split("(")[0] in funcionesDeclaradas:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Ya existe una fucnion con ese nombre"
-                                        break
-                                    else:
-                                        funcionesDeclaradas.append(nombre.split("(")[0])
-                                        script+="function "+str(nombre)+"{"
-                                        funcionAbierta=True
-                                        inicioLinea=False
-                                else:
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> La linea debe terminar en :"
-                                    break
-                            #ninguna de las anteriores?
-                            else:
-                                descrError= "ERROR en la linea "+str(i+1)+"=> el inicio de linea no se reconoce"
-                                break
-                        else:
-                            descrError= "ERROR en la linea "+str(i+1)+"=> falta apuntador '->'"
-                            break
-                #inicioLinea false
-                else:
-                    #comienza con un tab?
-                    if re.search("^\t",linea):
-                        #tiene el apuntador?
-                        if re.search("->",linea):
-                            token=linea.split("->")[0]
-                            nombre=linea.split("->")[1]
-                            #es una variable valida?
-                            #print str(token)+" dentro de un bloque"
-                            if token in variablesValidas:
-                                #es una variable local?
-                                if re.search("^\tvarl",linea):
-                                    #esta asignada?
-                                    if re.search("=",nombre):
-                                        variable=nombre.split("=")[0]
-                                        asignacion=nombre.split("=")[1]
-                                        #contiene solo letras minusculas?
-                                        if re.search("^[a-z]*$",variable):
-                                            #Ya fue declarada?
-                                            if nombre in variablesDeclaradas:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> Esta variable ya fue declarada"
-                                                break
-                                            #No ha sido declarada
-                                            else:
-                                                v=nombre.split("=")
-                                                variablesDeclaradas.append(v[0])
-                                                #esta vacia la asignacion
-                                                if asignacion=="":
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=) no vacia"
-                                                    break
-                                                #es una variable numerica?
-                                                elif re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    #print "posible numero"
-                                                    script=script+"var "+variable+" = "+asignacion+";"
-                                                #es una variable de texto
-                                                elif re.search("^\"*.*\"$",asignacion):
-                                                    #print "posible cadena"
-                                                    script=script+"var "+variable+" = "+asignacion+";"
-                                                #asignacion de algun metodo o funcion?
-                                                elif "\t"+asignacion.split("(")[0] in elementosBloque:
-                                                    #solo las permitidas que retornan valores
-                                                    if asignacion.split("(")[0]=="propiedad":
-                                                        #print "asignada retorna propiedad"
-                                                        param=asignacion.split("(")
-                                                        param=param[1].split(",")
-                                                        #retorna el valor de la propiedad
-                                                        if len(param)==2:
-                                                            ob=False
-                                                            obt=0
-                                                            #buscamos el objeto
-                                                            for i in range(0,len(obje)):
-                                                                if(obje[i].nombre == param[0]):
-                                                                    atributos= obje[i].__dict__
-                                                                    ob=True
-                                                                    obt=i
-                                                                    break
-                                                            #No existe?
-                                                            if ob==False:
-                                                                descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
-                                                                break
-                                                            #Si existe?
-                                                            else:
-                                                                atr=param[1]
-                                                                atr=atr[0:len(atr)-1]
-                                                                if atr in atributos:
-                                                                    if atr=="colorFondo":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('background-color');"
-                                                                    elif atr=="transparencia":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('opacity');"
-                                                                    elif atr=="ancho":
-                                                                        script=script+"var "+str(variable)+"=(parseInt($('#"+str(param[0])+"').css('width'))/parseInt(wh))*100;"
-                                                                    elif atr=="alto":
-                                                                        script=script+"var "+str(variable)+"=(parseInt($('#"+str(param[0])+"').css('height'))/parseInt(hh))*100;"
-                                                                    elif atr=="x":
-                                                                        script=script+"var "+str(variable)+"=(parseInt($('#"+str(param[0])+"').css('left'))/parseInt(wh))*100;"
-                                                                    elif atr=="y":
-                                                                        script=script+"var "+str(variable)+"=(parseInt($('#"+str(param[0])+"').css('top'))/parseInt(hh))*100;"
-                                                                    elif atr=="borde":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('border-style');"
-                                                                    elif atr=="colorBorde":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('border-color');"
-                                                                    elif atr=="anchoBorde":
-                                                                        script=script+"var "+str(variable)+"=parseInt($('#"+str(param[0])+"').css('border-width'));"
-                                                                    elif atr=="sombra":
-                                                                        script=script+"var "+str(variable)+"='"+str(obje[obt].sombra)+"';"
-                                                                    elif atr=="rotar":
-                                                                        script=script+"var "+str(variable)+"='"+str(obje[obt].rotar)+"';"
-                                                                    elif atr=="oculto":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('display');"
-                                                                    elif atr=="radio":
-                                                                        script=script+"var "+str(variable)+"='"+str(obje[obt].radio)+"';"
-                                                                    elif atr=="imagen":
-                                                                        script=script+"var "+str(variable)+"='$('#"+str(param[0])+"').attr('src');"
-                                                                    elif atr=="texto":
-                                                                        if re.search("^Entrada[0-9]$",param[0]):
-                                                                            script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').val();"
-                                                                        else:
-                                                                            script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').text();"
-                                                                    elif atr=="tamanoTexto":
-                                                                        script=script+"var "+str(variable)+"=parseInt($('#"+str(param[0])+"').css('font-size'));"
-                                                                    elif atr=="colorTexto":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('color');"
-                                                                    elif atr=="fuente":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('font-family');"
-                                                                    elif atr=="alineacion":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').css('align');"
-                                                                    elif atr=="lista":
-                                                                        script=script+"var "+str(variable)+"='"+str(obje[obt].lista)+"';"
-                                                                    elif atr=="valor":
-                                                                        script=script+"var "+str(variable)+"=$('#"+str(param[0])+"').val();"
-                                                                    else:
-                                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" no tiene la propiedad "+str(param[1])
-                                                                        break
-                                                                else:
-                                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" no tiene la propiedad "+str(param[1])
-                                                                    break
-                                                        else:
-                                                            descrError= "ERROR en la linea "+str(i+1)+"=> propiedad admite solo 2 argumentos en este contexto"
-                                                            break
-                                                    elif asignacion.split("(")[0]=="confirmacion":
-                                                        #print "asignada confirmacion"
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+"var "+variable+"=confirm('"+atr+"');"
-                                                    elif asignacion.split("(")[0]=="entrada":
-                                                        #print "entrada"
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+"var "+variable+"=prompt('"+atr+"');"
-
-                                                    elif asignacion.split("(")[0]=="leerDato":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+str(variable)+"=sessionStorage."+str(atr)+";"
-                                                    elif asignacion.split("(")[0]=="aritmetica":
-                                                        #print aritmetica
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+"var "+variable+"=parseFloat("+str(atr)+");"
-                                                    elif asignacion.split("(")[0]=="arreglo":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        if len(atr)==0:
-                                                            script+="var "+variable+"=new Array();"
-                                                        else:
-                                                            script+="var "+variable+"=new Array("+str(atr)+");"
-                                                    elif asignacion.split("(")[0]=="aleatorio":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+" 592=> La variable "+str(nombre)+" no se le puede asignar valor" 
-                                                        break
-                                                elif asignacion.split("(")[0]=="aritmetica":
-                                                    #print aritmetica
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+"var "+variable+"=parseFloat("+str(atr)+");"
-                                                elif asignacion.split("(")[0]=="aleatorio":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
-                                                #ninguna de las anteriores
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+" 597=> La variable "+str(nombre)+" no se le puede asignar ese valor"
-                                                    break
-                                        #es una variable de arreglo?
-                                        elif re.search("^[a-z]+\[\d+\]",variable):
-                                            if variable.split("[")[0] in variablesDeclaradas:
-                                                #es una variable numerica?
-                                                if re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    #print "posible numero"
-                                                    script=script+"var "+variable+"="+asignacion+";"
-                                                #es una variable de texto
-                                                elif re.search("^\"*.*\"$",asignacion):
-                                                    #print "posible cadena"
-                                                    script=script+"var "+variable+"='"+asignacion+"';"
-                                                elif asignacion.split("(")[0]=="aritmetica":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+"var "+variable+"="+str(atr)+";"
-                                                elif asignacion.split("(")[0]=="arreglo":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    if len(atr)==0:
-                                                        script+="var "+variable+"=new Array();"
-                                                    else:
-                                                        script+="var "+variable+"=new Array("+str(atr)+");"
-                                                elif asignacion.split("(")[0]=="aleatorio":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
-                                                elif asignacion.split("(")[0]=="leerDato":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+str(variable)+"=sessionStorage."+str(atr)+";"
-                                                elif re.search("^[a-z]+\[\d+\]",asignacion):
-                                                    if asignacion.split("[")[0] in variablesDeclaradas:
-                                                        script=script+str(variable)+"="+str(asignacion)+";"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+" (692)> Arreglo no declarado"
-                                                        break
-                                                #ninguna de las anteriores
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+" (696)> Al arreglo "+str(variable)+" no se le puede asignar ese valor"
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+" 608=> La variable "+str(nombre)+" solo puede contener letras minusculas"
-                                                break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=)"
-                                        break
-                                # es una variable general?
-                                elif re.search("^\tvarg",linea):
-                                    #tiene asignacion?
-                                    if re.search("=",nombre):
-                                        variable=nombre.split("=")[0]
-                                        asignacion=nombre.split("=")[1]
-                                        #contiene solo letras minusculas?
-                                        if re.search("^[a-z]*$",variable):
-                                            #Ya fue declarada?
-                                            if variable not in variablesDeclaradas:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" No ha sido declarada"
-                                                break
-                                            #Ya ha sido declarada
-                                            else:
-                                                #esta vacia la asignacion
-                                                if asignacion=="":
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=) no vacia"
-                                                    break
-                                                #es una variable numerica?
-                                                elif re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    #print "posible numero"
-                                                    script=script+" "+variable+" = "+asignacion+";"
-                                                #es una variable de texto
-                                                elif re.search("^\"*.*\"$",asignacion):
-                                                    #print "posible cadena"
-                                                    script=script+" "+variable+" = '"+asignacion+"';"
-                                                #asignacion de algun metodo o funcion?
-                                                elif "\t"+asignacion.split("(")[0] in elementosBloque:
-                                                    #solo las permitidas que retornan valores
-                                                    if asignacion.split("(")[0]=="propiedad":
-                                                        #print "asignada retorna propiedad"
-                                                        param=asignacion.split("(")
-                                                        param=param[1].split(",")
-                                                        #retorna el valor de la propiedad
-                                                        if len(param)==2:
-                                                            ob=False
-                                                            obt=0
-                                                            #buscamos el objeto
-                                                            for i in range(0,len(obje)):
-                                                                if(obje[i].nombre == param[0]):
-                                                                    atributos= obje[i].__dict__
-                                                                    ob=True
-                                                                    obt=i
-                                                                    break
-                                                            #No existe?
-                                                            if ob==False:
-                                                                descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
-                                                                break
-                                                            #Si existe?
-                                                            else:
-                                                                atr=param[1]
-                                                                atr=atr[0:len(atr)-1]
-                                                                if atr in atributos:
-                                                                    if atr=="colorFondo":
-                                                                        script=script+" "+str(variable)+"=$('#"+str(param[0])+"').css('background-color');"
-                                                                    elif atr=="transparencia":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].transparencia)+"';"
-                                                                    elif atr=="ancho":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].ancho)+"';"
-                                                                    elif atr=="alto":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].alto)+"';"
-                                                                    elif atr=="x":
-                                                                       script=script+"var "+str(variable)+"=(parseInt($('#"+str(param[0])+"').css('left'))/parseInt(wh))*100;"
-                                                                    elif atr=="y":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].y)+"';"
-                                                                    elif atr=="borde":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].borde)+"';"
-                                                                    elif atr=="colorBorde":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].colorBorde)+"';"
-                                                                    elif atr=="anchoBorde":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].anchoBorde)+"';"
-                                                                    elif atr=="sombra":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].sombra)+"';"
-                                                                    elif atr=="rotar":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].rotar)+"';"
-                                                                    elif atr=="oculto":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].oculto)+"';"
-                                                                    elif atr=="radio":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].radio)+"';"
-                                                                    elif atr=="imagen":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].imagen)+"';"
-                                                                    elif atr=="texto":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].texto)+"';"
-                                                                    elif atr=="tamanoTexto":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].tamanoTexto)+"';"
-                                                                    elif atr=="colorTexto":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].colorTexto)+"';"
-                                                                    elif atr=="fuente":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].fuente)+"';"
-                                                                    elif atr=="alineacion":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].alineacion)+"';"
-                                                                    elif atr=="lista":
-                                                                        script=script+" "+str(variable)+"='"+str(obje[obt].lista)+"';"
-                                                                    elif atr=="valor":
-                                                                        script+="var "+str(variable)+"=$('#"+str(param[0])+"').val();"
-                                                                    else:
-                                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" no tiene la propiedad "+str(param[1])
-                                                                        break
-                                                                else:
-                                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" no tiene la propiedad "+str(param[1])
-                                                                    break
-                                                        else:
-                                                            descrError= "ERROR en la linea "+str(i+1)+"=> propiedad admite solo 2 argumentos en este contexto"
-                                                            break
-                                                    elif asignacion.split("(")[0]=="confirmacion":
-                                                        print "asignada confirmacion"
-                                                    elif asignacion.split("(")[0]=="entrada":
-                                                        print "entrada"
-                                                    elif asignacion.split("(")[0]=="leerDato":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+str(variable)+"=sessionStorage."+str(atr)+";"
-                                                    elif asignacion.split("(")[0]=="aritmetica":
-                                                        #print aritmetica
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+" "+variable+"=parseFloat("+str(atr)+");"
-
-                                                    elif asignacion.split("(")[0]=="aleatorio":
-                                                        atr=asignacion.split("(")[1]
-                                                        atr=atr[0:len(atr)-1]
-                                                        script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
-
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+" 737=> El metodo no retorna valores"
-                                                        break
-                                                elif asignacion.split("(")[0]=="aritmetica":
-                                                    #print aritmetica
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=parseFloat("+str(atr)+");"
-
-                                                elif asignacion.split("(")[0]=="aleatorio":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1)";
-
-                                                #ninguna de las anteriores
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+" 752=> La variable "+str(nombre)+" no se le puede asignar ese valor"
-                                                    break
-                                        #es una variable de arreglo?
-                                        elif re.search("^[a-z]+\[\d+\]",variable):
-                                            if variable.split("[")[0] in variablesDeclaradas:
-                                                #es una variable numerica?
-                                                if re.search("^[0-9]*.[0-9]*$",asignacion):
-                                                    #print "posible numero"
-                                                    script=script+str(variable)+" = "+asignacion+";"
-                                                #es una variable de texto
-                                                elif re.search("^\"*.*\"$",asignacion):
-                                                    #print "posible cadena"
-                                                    script=script+str(variable)+"='"+asignacion+"';"
-                                                elif asignacion.split("(")[0]=="aritmetica":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+"var "+variable+"="+str(atr)+";"
-                                                elif asignacion.split("(")[0]=="arreglo":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    if len(atr)==0:
-                                                        script+="var "+variable+"=new Array();"
-                                                    else:
-                                                        script+="var "+variable+"=new Array("+str(atr)+");"
-                                                elif asignacion.split("(")[0]=="aleatorio":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
-                                                elif asignacion.split("(")[0]=="leerDato":
-                                                    atr=asignacion.split("(")[1]
-                                                    atr=atr[0:len(atr)-1]
-                                                    script=script+str(variable)+"=sessionStorage."+str(atr)+";"
-                                                elif re.search("^[a-z]+\[\d+\]",asignacion):
-                                                    if asignacion.split("[")[0] in variablesDeclaradas:
-                                                        script=script+str(variable)+"="+str(asignacion)+";"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+" (692)> Arreglo no declarado"
-                                                        break
-                                                #ninguna de las anteriores
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+" (872)> Al arreglo "+str(nombre)+" no se le puede asignar ese valor"
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+" (874)> El arreglo "+str(nombre)+" no existe"
-                                                break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" solo puede contener letras minusculas"
-                                            break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" requiere de una asignacion (=) no vacia"
-                                        break
-                                # no es un variable
-                                else:
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" No ha sido declarada"
-                                    break
-                            elif token.split("\t")[1] in eventosObjetos:
-                                descrError= "ERROR en la linea "+str(i+1)+"=> No puede colocar un evento de objeto dentro de otro"
-                                break
-                            elif token.split("\t")[1] in eventosValidos:
-                                descrError= "ERROR en la linea "+str(i+1)+"=> No puede colocar un evento dentro de un evento de objeto"
-                                break
-                            elif re.search("^\tfin",token):
-                                if nombre.split("(")[0]=="Si":
-                                    script=script+"};"
-                                    condicional=""
-                                elif nombre.split("(")[0]=="tecla":
-                                    script=script+"};"
-                                    cierraTecla=False
-                            else:
-                                descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(nombre)+" No tiene validez"
-                                break
-                        else:
-                            #No tiene apuntador
-                            variablesLocales=False
-                            #Probamos con elementos de bloque
-                            token=linea.split("(")[0]
-                            parametro=linea.split("(")[1]
-                            #es un elemento de bloque?
-                            if token in elementosBloque:
-                                #cual elemento es?
-                                if token=="\tpropiedad":
-                                    param=parametro.split(",")
-                                    #retorna el valor de la propiedad
-                                    if len(param)==2:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> No se asigno propiedad a una variable"
-                                    #asigna valor a la propiedad
-                                    elif len(param)==3:
-                                        ob=False
-                                        #buscamos el objeto
-                                        for i in range(0,len(obje)):
-                                            if(obje[i].nombre == param[0]):
-                                                atributos= obje[i].__dict__
-                                                ob=True
-                                                break
-                                        #No existe?
-                                        if ob==False:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" No existe"
-                                            break
-                                        #Si existe?
-                                        else:
-                                            atr=param[1]
-                                            if atr in atributos:
-                                                valor=param[2]
-                                                valor=valor[0:len(valor)-1]
-                                                #print "Ok asignamos el valor "+valor[0:len(valor)-1]
-                                                if atr=="colorFondo":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('background-color',"+str(valor)+");"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('background-color','"+str(colores[valor])+"');"
-                                                elif atr=="transparencia":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('opacity',"+str(valor)+");"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('opacity','"+str(valor)+"');"
-                                                elif atr=="ancho":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('width',"+str(valor)+"+'%');"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('width','"+str(valor)+"%');"
-                                                elif atr=="alto":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('height',"+str(valor)+"+'%');"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('height','"+str(valor)+"%');"
-                                                elif atr=="x":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('left',"+str(valor)+"+'%');"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('left','"+str(valor)+"%');"
-                                                elif atr=="y":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('top',"+str(valor)+"+'%');"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('top','"+str(valor)+"%');"
-                                                elif atr=="borde":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('border-style',"+str(valor)+");"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('border-style','"+str(bordes[valor])+"');"
-                                                elif atr=="colorBorde":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('border-color',"+str(valor)+");"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('border-color','"+str(colores[valor])+"');"
-                                                elif atr=="anchoBorde":
-                                                    if valor in variablesDeclaradas:
-                                                        script=script+"$('#"+str(param[0])+"').css('border-width',"+str(valor)+"'px');"
-                                                    else:
-                                                        script=script+"$('#"+str(param[0])+"').css('border-width','"+str(valor)+"px');"
-                                                elif atr=="sombra":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].sombra)+"';"
-                                                elif atr=="rotar":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].rotar)+"';"
-                                                elif atr=="oculto":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].oculto)+"';"
-                                                elif atr=="radio":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].radio)+"';"
-                                                elif atr=="imagen":
-                                                    script=script+"$('#"+str(param[0])+"').attr('src','"+str(atributos['rt'])+str(valor)+"');"
-                                                elif atr=="texto":
-                                                     script=script+"$('#"+str(param[0])+"').text("+str(valor)+");"
-                                                elif atr=="tamanoTexto":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].tamanoTexto)+"';"
-                                                elif atr=="colorTexto":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].colorTexto)+"';"
-                                                elif atr=="fuente":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].fuente)+"';"
-                                                elif atr=="alineacion":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].alineacion)+"';"
-                                                elif atr=="lista":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].lista)+"';"
-                                                elif atr=="valor":
-                                                    script=script+"var "+str(variable)+"='"+str(obje[obt].valor)+"';"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" no tiene la propiedad "+str(param[1])
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" No tiene la propiedad "+str(param[1])
-                                                break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> propiedad debe tener 2 o 3 parametros"
-                                        break
-                                elif token=="\tmostrar":
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        ob=False
-                                        #buscamos el objeto
-                                        for i in range(0,len(obje)):
-                                            if(obje[i].nombre == param[0]):
-                                                ob=True
-                                                break
-                                        #No existe?
-                                        if ob==False:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
-                                            break
-                                        #Si existe?
-                                        else:
-                                            atr=param[1]
-                                            atr=atr[0:len(atr)-1]
-                                            if atr == "Si":
-                                                #print "ok mostramos con efecto"
-                                                script=script+"$('#"+param[0]+"').show('slow');"
-                                            elif atr == "No":
-                                                #print "ok mostramos sin efecto"
-                                                script=script+"$('#"+param[0]+"').show();"
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el segundo parametro sea (Si o No)"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere dos parametros"
-                                        break
-                                elif token=="\tocultar":
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        ob=False
-                                        #buscamos el objeto
-                                        for i in range(0,len(obje)):
-                                            if(obje[i].nombre == param[0]):
-                                                ob=True
-                                                break
-                                        #No existe?
-                                        if ob==False:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
-                                            break
-                                        #Si existe?
-                                        else:
-                                            atr=param[1]
-                                            atr=atr[0:len(atr)-1]
-                                            if atr == "Si":
-                                                #print "ok ocultamos con efecto"
-                                                script=script+"$('#"+param[0]+"').hide('slow');"
-                                            elif atr == "No":
-                                                #print "ok ocultamos sin efecto"
-                                                script=script+"$('#"+param[0]+"').hide();"
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el segundo parametro sea (Si o No)"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere dos parametros"
-                                        break
-                                elif token=="\trotar":
-                                    param=parametro.split(",")
-                                    if len(param)==3:
-                                        ob=False
-                                        #buscamos el objeto
-                                        for i in range(0,len(obje)):
-                                            if(obje[i].nombre == param[0]):
-                                                ob=True
-                                                break
-                                        #No existe?
-                                        if ob==False:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
-                                            break
-                                        #Si existe?
-                                        else:
-                                            atr=param[1]
-                                            if atr == "Si":
-                                                valor=param[2]
-                                                valor=valor[0:len(valor)-1]
-                                                if valor[0:len(valor)-1].isdigit():
-                                                    script+="$('#"+param[0]+"').css({WebkitTransform: 'rotate("+str(valor)+"deg)'});"
-                                                    #print "ok rotamos con efecto" +valor[0:len(valor)-1]
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El parametro 3 debe ser un digito"
-                                                    break
-                                            elif atr == "No":
-                                                valor=param[2]
-                                                if valor[0:len(valor)-1].isdigit():
-                                                    script+="$('#"+param[0]+"').css({WebkitTransform: 'rotate("+str(valor)+"deg)'});"
-                                                    #print "ok rotamos sin efecto" +valor[0:len(valor)-1]
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El parametro 3 debe ser un digito"
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el segundo parametro sea (Si o No)"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere tres parametros"
-                                        break
-                                elif token=="\tmover":
-                                    param=parametro.split(",")
-                                    if len(param)==4:
-                                        ob=False
-                                        #buscamos el objeto
-                                        for i in range(0,len(obje)):
-                                            if(obje[i].nombre == param[0]):
-                                                ob=True
-                                                break
-                                        #No existe?
-                                        if ob==False:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[0])+" No existe"
-                                            break
-                                        #Si existe?
-                                        else:
-                                            if param[1].isdigit():
-                                                if param[2].isdigit():
-                                                    atr=param[3]
-                                                    atr=atr[0:len(atr)-1]
-                                                    #print atr
-                                                    if atr=="Si":
-                                                        script+="$('#"+param[0]+"').animate({left:'"+str(param[1])+"%',top:'"+str(param[2])+"%'},'slow');"
-                                                    elif atr=="No":
-                                                        script+="$('#"+param[0]+"').css({left:'"+str(param[1])+"%',top:'"+str(param[2])+"%'});"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el cuarto parametro sea (Si o No)"
-                                                        break
-                                                elif param[2] in variablesDeclaradas:
-                                                    atr=param[3]
-                                                    atr=atr[0:len(atr)-1]
-                                                    #print atr
-                                                    if atr=="Si":
-                                                        script+="$('#"+param[0]+"').animate({left:'"+str(param[1])+"%',top:"+str(param[2])+"+'%'},'slow');"
-                                                    elif atr=="No":
-                                                        script+="$('#"+param[0]+"').css({left:'"+str(param[1])+"%',top:"+str(param[2])+"+'%'});"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el cuarto parametro sea (Si o No)"
-                                                        break
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El tercer argumento debe ser un entero o una variable"
-                                                    break
-                                            elif param[1] in variablesDeclaradas:
-                                                if param[2].isdigit():
-                                                    atr=param[3]
-                                                    atr=atr[0:len(atr)-1]
-                                                    #print atr
-                                                    if atr=="Si":
-                                                        script+="$('#"+param[0]+"').animate({left:"+str(param[1])+"+'%',top:'"+str(param[2])+"%'},'slow');"
-                                                    elif atr=="No":
-                                                        script+="$('#"+param[0]+"').css({left:"+str(param[1])+"+'%',top:'"+str(param[2])+"%'});"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el cuarto parametro sea (Si o No)"
-                                                        break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El segundo argumento debe ser un entero o una variable"
-                                                break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere cuatro parametros"
-                                        break
-                                elif token=="\tredimensionar":
-                                    param=parametro.split(",")
-                                    if len(param)==4:
-                                        ob=False
-                                        #buscamos el objeto
-                                        for i in range(0,len(obje)):
-                                            if(obje[i].nombre == param[0]):
-                                                ob=True
-                                                break
-                                        #No existe?
-                                        if ob==False:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El objeto "+str(param[1])+" No existe"
-                                            break
-                                        #Si existe?
-                                        else:
-                                            if param[2].isdigit():
-                                                if param[1].isdigit():
-                                                    atr=param[3]
-                                                    atr=atr[0:len(atr)-1]
-                                                    if atr == "Si":
-                                                        script+="$('#"+param[0]+"').animate({width:'"+str(param[1])+"%',height:'"+str(param[2])+"%'},'slow');"
-                                                    elif atr == "No":
-                                                        script+="$('#"+param[0]+"').css({width:'"+str(param[1])+"%',height:'"+str(param[2])+"%'});"
-                                                    else:
-                                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere que el cuarto parametro sea (Si o No)"
-                                                        break
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> El tercer argumento debe ser un entero"
-                                                    break
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El segundo argumento debe ser un entero"
-                                                break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere cuatro parametros"
-                                        break
-                                elif token=="\tmensaje":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    if parametro in variablesDeclaradas:
-                                        script=script+"alert("+parametro+");"
-                                    elif re.search("^[a-z]+\[\d+\]$",parametro):
-                                        script=script+"alert("+parametro+");"
-                                    else:
-                                        script=script+"alert('"+parametro+"');"
-                                elif token=="\tconfirmacion":
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> Este metodo debe ser asignado"
-                                    break
-                                elif token=="\tentrada":
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> Este metodo debe ser asignado"
-                                    break
-                                elif token=="\insertarObjeto":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    print variablesDeclaradas
-                                    if parametro in variablesDeclaradas:
-                                        script=script+"$(document.body).append("+parametro+");"
-                                    else:
-                                        script=script+"$(document.body).append('"+parametro+"');"
-                                elif token=="\tinc":
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        parametro=param[0]
-                                        atr=param[1]
-                                        atr=atr[0:len(param[1])-1]
-                                        if parametro in variablesDeclaradas:
-                                            if atr.isdigit():
-                                                script=script+str(parametro)+"="+str(parametro)+"+"+str(atr)+";"
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El segundo argumento debe ser un entero"
-                                                break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(parametro)+" no existe"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere dos parametros"
-                                        break
-                                elif token=="\tdec":
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        parametro=param[0]
-                                        atr=param[1]
-                                        atr=atr[0:len(param[1])-1]
-                                        if parametro in variablesDeclaradas:
-                                            if atr.isdigit():
-                                                script=script+str(parametro)+"="+str(parametro)+"-"+str(atr)+";"
-                                            else:
-                                                descrError= "ERROR en la linea "+str(i+1)+"=> El segundo argumento debe ser un entero"
-                                                break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> La variable "+str(parametro)+" no existe"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere dos parametros"
-                                elif token=="\tsonido":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        parametro=parametro[0:len(parametro)-1]
-                                        if param[1]=="pausa":
-                                            script=script+"document.getElementById('"+param[0]+"').pause();"
-                                        elif param[1]=="detener":
-                                            script=script+"document.getElementById('"+param[0]+"').pause();document.getElementById('"+param[0]+"').currentTime=0;"
-                                        elif param[1]=="volumen+":
-                                            script=script+"document.getElementById('"+param[0]+"').volume += 0.1;"
-                                        elif param[1]=="volumen-":
-                                            script=script+"document.getElementById('"+param[0]+"').volume -= 0.1;"
-                                        elif param[1]=="ciclo":
-                                            script=script+"document.getElementById('"+param[0]+"').loop=true;document.getElementById('"+param[0]+"').play();"
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El segundo parametro de sonido no se reconoce"
-                                            break
-                                    else:
-                                        script=script+"document.getElementById('"+parametro+"').play();"
-                                elif token=="\tvideo":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        parametro=parametro[0:len(parametro)-1]
-                                        if param[1]=="pausa":
-                                            script=script+"document.getElementById('"+param[0]+"').pause();"
-                                        elif param[1]=="detener":
-                                            script=script+"document.getElementById('"+param[0]+"').pause();document.getElementById('"+param[0]+"').currentTime=0;"
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> El segundo parametro de sonido no se reconoce"
-                                            break
-                                    else:
-                                        script=script+"document.getElementById('"+parametro+"').play();"
-                                elif token=="\thoja":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    script=script+"$(document).prop('title','"+parametro+"');window.location.href='pagina"+str(parametro)+".html';"
-                                elif token=="\tescribirDato":
-                                    param=parametro.split(",")
-                                    if len(param)==2:
-                                        parametro=param[0]
-                                        atr=param[1]
-                                        atr=atr[0:len(param[1])-1]
-                                        script=script+"sessionStorage."+str(parametro)+"="+str(atr)+";"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> El metodo requiere dos parametros"
-                                        break
-                                elif token=="\ttecla":
-                                    if teclas:
-                                        parametro=parametro[0:len(parametro)-1]
-                                        script=script+"if(e.keyCode=="+str(parametro)+"){"
-                                        cierraTecla=True
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Este Metodo solo puede ser usado con el evento de Hoja PulsarTecla, SoltarTecla"
-                                        break
-                                elif token=="\tcronometro":
-                                    param=parametro.split(",")
-                                    valor=param[1]
-                                    valor=valor[0:len(valor)-1]
-                                    print valor
-                                    if param[0]=="iniciar":
-                                        script=script+"crono"+str(valor)+".play();"
-                                    elif param[0]=="detener":
-                                        script=script+"crono"+str(valor)+".stop();"
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Solo se admiten los parametros iniciar y detener"
-                                        break
-                                elif token=="\tesperar":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    script=script+"espera("+str(parametro)+");"
-                                elif token=="\tSi":
-                                    parametro=parametro[0:len(parametro)-1]
-                                    if parametro==None:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Debe indicar los criterios de comparacion"
-                                        break
-                                    elif re.search("=",parametro):
-                                        if parametro.split("=")[0] in variablesDeclaradas:
-                                            if parametro.split("=")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split("=")[0])+"=="+str(parametro.split("=")[1])+"){"
-                                            else:
-                                                if re.search("^[0-9]*.[0-9]*$",parametro.split("=")[1]):
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split("=")[0])+"=="+str(parametro.split("=")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        elif re.search("^[0-9]*.[0-9]*$",parametro.split("=")[0]):
-                                            if parametro.split("=")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split("=")[0])+"=="+str(parametro.split("=")[1])+"){"
-                                            else:
-                                                if parametro.split("=")[0] in variablesDeclaradas:
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split("=")[0])+"=="+str(parametro.split("=")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                            break
-                                    elif re.search(">",parametro):
-                                        if parametro.split(">")[0] in variablesDeclaradas:
-                                            if parametro.split(">")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split(">")[0])+">"+str(parametro.split(">")[1])+"){"
-                                            else:
-                                                if re.search("^[0-9]*.[0-9]*$",parametro.split(">")[1]):
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split(">")[0])+">"+str(parametro.split(">")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        elif re.search("^[0-9]*.[0-9]*$",parametro.split(">")[0]):
-                                            if parametro.split(">")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split(">")[0])+">"+str(parametro.split(">")[1])+"){"
-                                            else:
-                                                if parametro.split(">")[0] in variablesDeclaradas:
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split(">")[0])+">"+str(parametro.split(">")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                            break
-                                    elif re.search("<",parametro):
-                                        if parametro.split("<")[0] in variablesDeclaradas:
-                                            if parametro.split("<")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split("<")[0])+"<"+str(parametro.split("<")[1])+"){"
-                                            else:
-                                                if re.search("^[0-9]*.[0-9]*$",parametro.split("<")[1]):
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split("<")[0])+"<"+str(parametro.split("<")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        elif re.search("^[0-9]*.[0-9]*$",parametro.split("<")[0]):
-                                            if parametro.split("<")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split("<")[0])+"<"+str(parametro.split("<")[1])+"){"
-                                            else:
-                                                if parametro.split("<")[0] in variablesDeclaradas:
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split("=")[0])+"<"+str(parametro.split("<")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                            break
-                                    elif re.search("!",parametro):
-                                        if parametro.split("!")[0] in variablesDeclaradas:
-                                            if parametro.split("!")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split("!")[0])+"!="+str(parametro.split("!")[1])+"){"
-                                            else:
-                                                if re.search("^[0-9]*.[0-9]*$",parametro.split("!")[1]):
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split("!")[0])+"!="+str(parametro.split("!")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        elif re.search("^[0-9]*.[0-9]*$",parametro.split("!")[0]):
-                                            if parametro.split("!")[1] in variablesDeclaradas:
-                                                condicional="Si"
-                                                script=script+"if("+str(parametro.split("!")[0])+"!="+str(parametro.split("!")[1])+"){"
-                                            else:
-                                                if parametro.split("!")[0] in variablesDeclaradas:
-                                                    condicional="Si"
-                                                    script=script+"if("+str(parametro.split("!")[0])+"!="+str(parametro.split("!")[1])+"){"
-                                                else:
-                                                    descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                                    break
-                                        else:
-                                            descrError= "ERROR en la linea "+str(i+1)+"=> Los parametros de comparacion deben ser una variable o un valor numerico"
-                                            break
-                                    else:
-                                        descrError= "ERROR en la linea "+str(i+1)+"=> Se requiere de un operador de comparacion (=,<,>,!)"
-                                        break
-                                else:
-                                    descrError= "ERROR en la linea "+str(i+1)+"=> No se conoce la accion"
-                                    break
-                            elif token in funcionesDeclaradas:
-                                continue
-                            else:
-                                descrError= "ERROR en la linea "+str(i+1)+"=> No se conoce la accion"
-                                break
-                    #empieza por fin->?
-                    elif re.search("^fin->",linea):
-                        print linea.split("->")[1]
-                        if condicional!="":
-                            descrError= "ERROR en la linea "+str(i+1)+"=> El bloque del Condicional debe cerrarse (fin->)"
-                            break
-                        #Cierra el bloque abierto?
-                        if linea.split("->")[1]==abiertoBloque:
-                            if abiertoBloque=="cicloSistema":
-                                script=script+"});timer.set({ time : 100, autostart : true });"
-                            elif abiertoBloque=="cronometroSistema":
-                                script=script+"});crono"+str(cron-1)+".set({ time : "+str(t)+", autostart : false });"
-                                t=0
-                            else:
-                                script=script+"});"
-                            inicioLinea=True
-                            abiertoBloque=""
-                            variablesLocales=True
-                            teclas=False
-                        elif linea.split("->")[1]=="func":
-                            script+="}"
-                            funcionAbierta=False
-                            inicioLinea=True
-                        else:
-                            descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de evento debe cerrarse (fin->)"
-                        if cierraTecla:
-                            descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de la Tecla debe cerrarse (fin->)"
-                            break
-                    else:
-                        descrError= "ERROR en la linea "+str(i+1)+"=> Dentro del bloque debe inciar con 'tab'"
-                        break
+                        print "Tipo Linea:"+tipoLinea[r[1]]
+                        print "Traduccion:"+r[2]
             else:
                 linea=""
                 continue
-        if descrError=="Ok":
-            if condicional!="":
-                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque del Condicional debe cerrarse (fin->)"
-            elif funcionAbierta==True:
-                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de  Funcion debe cerrarse (fin->)"
-            elif abiertoBloque!="":
-                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de evento debe cerrarse (fin->)"
-            elif cierraTecla:
-                descrError= "ERROR en la linea "+str(i+1)+"=> El bloque de la Tecla debe cerrarse (fin->)"
-            else:
-                script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}});"
-                self.window.destroy()
-        else:
-            script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}alert('"+str(descrError)+"')});"
+        '''else:
+            script=script+"function espera(ms){var ini=new Date().getTime();for(i=0;i<1e7;i++){if((new Date().getTime()-ini)>ms){break}}}alert('"+str(descrError)+"')});"'''
                 
-        self.barraEstado.push(0,str(descrError))
-        obje[0].javascript=""
+        self.barraEstado.push(0,errores[r[1]])
+        '''obje[0].javascript=""
         obje[0].escritos=""
         print script
         obje[0].javascript="<script>"+script+"</script>"
         obje[0].escritos=data.get_text(*data.get_bounds())
-        
+        '''
