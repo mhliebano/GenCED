@@ -31,8 +31,25 @@ class ObjetoPrimario(object):
         return a
         
     def propiedades(self):
-        return str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.ancho)+"\\"+str(self.alto)+"\\"+str(self.x)+"\\"+str(self.y)+"\\"+str(self.borde)+"\\"+str(self.colorBorde)+"\\"+str(self.anchoBorde)+"\\"+str(self.sombra)+"\\"+str(self.rotar)+"\\"+str(self.oculto)+"\\"+str(self.tip)+"\\"+str(self.etiqueta)
-        
+        return {"colorFondo":str(self.colorFondo),"transparencia":str(self.transparencia),"ancho":str(self.ancho),"alto":str(self.alto),"x":str(self.x),"y":str(self.y),"borde":str(self.borde),"colorBorde":str(self.colorBorde),"anchoBorde":str(self.anchoBorde),"sombra":str(self.sombra),"rotar":str(self.rotar),"oculto":str(self.oculto),"tip":str(self.tip),"etiqueta":str(self.etiqueta)}
+
+    def asignaPropiedades(self,prop):
+        self.colorFondo=prop["colorFondo"]
+        self.transparencia=prop["transparencia"]
+        self.ancho=prop["ancho"]
+        self.alto=prop["alto"]
+        self.x=prop["x"]
+        self.y=prop["y"]
+        self.borde=prop["borde"]
+        self.colorBorde=prop["colorBorde"]
+        self.anchoBorde=prop["anchoBorde"]
+        self.sombra=prop["sombra"]
+        self.rotar=prop["rotar"]
+        self.oculto=prop["oculto"]
+        self.etiqueta=prop["etiqueta"]
+        self.tip=prop["tip"]
+
+    
 class Escena(object):
     def __init__(self,x):
         self._nombre="Hoja"+str(x)
@@ -40,9 +57,9 @@ class Escena(object):
         self.transparencia=1.0
         self.imagen=None
         self.ajusteImagen="Falso"
-        self.cuentaObjetos={"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"sonido":0,"video":0}
         self.escritos=""
         self.javascript=""
+
     def obtenerNombre(self):
         return self._nombre
     
@@ -57,17 +74,31 @@ class Escena(object):
         return a
     
     def propiedades(self):
-        return {"colorFondo":str(self.colorFondo),"transparencia":str(self.transparencia),"imagen":str(self.imagen),"ajusteImagen":str(self.ajusteImagen)}
+        return {"colorFondo":str(self.colorFondo),"transparencia":str(self.transparencia),"imagen":str(self.imagen),"ajusteImagen":str(self.ajusteImagen),"escrito":str(self.escritos),"java":str(self.javascript)}
         #return "p\\"+str(self.colorFondo)+"\\"+str(self.transparencia)+"\\"+str(self.imagen)+"\\"+str(self.ajusteImagen)+"\\"+str(self.cuentaObjetos["cuadro"])+","+str(self.cuentaObjetos["circulo"])+","+str(self.cuentaObjetos["triangulo"])+","+str(self.cuentaObjetos["linea"])+","+str(self.cuentaObjetos["imagen"])+","+str(self.cuentaObjetos["texto"])+","+str(self.cuentaObjetos["sonido"])+"\n"
         
-    
+    def asignaPropiedades(self,prop):
+        self.colorFondo=prop["colorFondo"]
+        self.transparencia=prop["transparencia"]
+        self.imagen=prop["imagen"]
+        self.ajusteImagen=prop["ajusteImagen"]
+        self.escritos=prop["escrito"]
+        self.javascript=prop["java"]
+
     nombre = property(obtenerNombre)
 
 class Cuadro(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Cuadrado"+str(x)
-    
+        self._ide=x
+
+    def tipo(self):
+        return "cuadro"
+
+    def obtenerId(self):
+        return self._ide
+        
     def obtenerNombre(self):
         return self._nombre
     
@@ -75,59 +106,100 @@ class Cuadro(ObjetoPrimario):
         return "<div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' ></div>"
     
     def propiedades(self):
-        return "c\\"+ObjetoPrimario.propiedades(self)+"\n"
-    
-    nombre = property(obtenerNombre)
+        return ObjetoPrimario.propiedades(self)
 
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        
+    nombre = property(obtenerNombre)
+    ide= property(obtenerId)
+    
 class Circulo(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Circulos"+str(x)
+        self._ide=x
         self.radio=120
-    
+
+    def tipo(self):
+        return "circulo"
+        
     def obtenerNombre(self):
         return self._nombre
+
+    def obtenerId(self):
+        return self._ide
     
     def trazaObjeto(self,archivo):
         return "<div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"-webkit-border-radius:"+str(self.radio)+"px' ></div>"
         
-    
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.radio=prop["radio"]
+
     def propiedades(self):
-        return "o\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.radio)+"\n"
+        p=ObjetoPrimario.propiedades(self)
+        p["radio"]=str(self.radio)
+        return p
     
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Triangulo(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Triangulo"+str(x)
-    
+        self._ide=x
+
+    def tipo(self):
+        return "triangulo"
+
+    def obtenerId(self):
+        return self._ide
+        
     def obtenerNombre(self):
         return self._nombre
-    
+
     def trazaObjeto(self,archivo):
         return "<div id='"+str(self._nombre)+"' style='width:0;height:0;position:absolute;top:"+str(self.y)+"%;left:"+str(self.x)+"%;border-bottom:"+str(self.alto)+"pt solid "+str(colores[self.colorFondo])+"; border-left:"+str(self.ancho)+"pt solid transparent;    border-right: "+str(self.ancho)+"pt solid transparent;line-height: 0;font-size:0;-webkit-transform:rotate("+str(self.rotar)+"deg)'   ></div>"
     
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+
     def propiedades(self):
-       return "t\\"+ObjetoPrimario.propiedades(self)+"\n"
-    
+        return ObjetoPrimario.propiedades(self)
+        
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Linea(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Linea"+str(x)
         self.alto=0
+        self._ide=x
+
+    def tipo(self):
+        return "linea"
+
+    def obtenerId(self):
+        return self._ide
+        
     def obtenerNombre(self):
         return self._nombre
-    
+
     def trazaObjeto(self,archivo):
         return "<div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' ></div>"
     
     def propiedades(self):
-        return "l\\"+ObjetoPrimario.propiedades(self)+"\n"
-    
+        return ObjetoPrimario.propiedades(self)
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.alto=0
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Imagen(ObjetoPrimario):
     def __init__(self,x):
@@ -136,17 +208,34 @@ class Imagen(ObjetoPrimario):
         self.imagen=None
         self.clip=0
         self.rt=None
+        self._ide=x
+
+    def tipo(self):
+        return "imagen"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
     
     def trazaObjeto(self,archivo):
         self.rt=str(archivo)+"/recursos/imagenes/"
         return "<img id='"+str(self._nombre)+"' src='"+str(archivo)+"/recursos/imagenes/"+str(self.imagen)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' />"
-    
+
     def propiedades(self):
-        return "i\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.imagen)+"\\"+str(self.clip)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["imagen"]=str(self.imagen)
+        p["clip"]=str(self.clip)
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.imagen=prop["imagen"]
+        self.clip=prop["clip"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Texto(ObjetoPrimario):
     def __init__(self,x):
@@ -158,26 +247,61 @@ class Texto(ObjetoPrimario):
         self.fuente="Arial"
         self.alineacion="center"
         self.parrafo="Falso"
+        self._ide=x
+
+    def tipo(self):
+        return "texto"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
-    
+
     def trazaObjeto(self,archivo):
         if self.parrafo=="Falso":
             return "<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><div id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"pt;text-align:"+str(self.alineacion)+"' >"+str(self.texto)+"</div>"
         else:
             return "<style>@font-face{font-family:'fuente';src: url('"+str(archivo)+"/recursos/archivos/"+str(self.fuente)+"')}</style><textarea disabled id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"font-family:fuente;color:"+str(colores[self.colorTexto])+";font-size:"+str(self.tamanoTexto)+"pt;text-align:"+str(self.alineacion)+"' >"+str(self.texto)+"</textarea>"
+
     def propiedades(self):
-        return "x\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\\"+str(self.tamanoTexto)+"\\"+str(self.colorTexto)+"\\"+str(self.fuente)+"\\"+str(self.alineacion)+"\\"+str(self.parrafo)+"\n"
+        p=ObjetoPrimario.propiedades(self)
+        p["texto"]=self.texto
+        p["tamanoTexto"]=self.tamanoTexto
+        p["colorTexto"]=self.colorTexto
+        p["fuente"]=self.fuente
+        p["alineacion"]=self.alineacion
+        p["parrafo"]=self.parrafo
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.texto=prop["texto"]
+        self.tamanoTexto=prop["tamanoTexto"]
+        self.colorTexto=prop["colorTexto"]
+        self.fuente=prop["fuente"]
+        self.alineacion=prop["alineacion"]
+        self.parrafo=prop["parrafo"]
+
 
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Boton(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
         self._nombre="Boton"+str(x)
-        self.texto="Boton"
+        self.texto="Boton"+str(x)
         self.alto=5
         self.sombra="Verdadero"
+        self._ide=x
+
+    def tipo(self):
+        return "boton"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
     
@@ -185,9 +309,17 @@ class Boton(ObjetoPrimario):
         return "<button id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' >"+str(self.texto)+"</button>"
     
     def propiedades(self):
-        return "b\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["texto"]=self.texto
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.texto=prop["texto"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
+
 
 class Entrada(ObjetoPrimario):
     def __init__(self,x):
@@ -196,16 +328,31 @@ class Entrada(ObjetoPrimario):
         self.texto="Entrada de Texto"
         self.alto=3
         self.ancho=15
+        self._ide=x
+
+    def tipo(self):
+        return "entrada"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
-    
+        
     def trazaObjeto(self,archivo):
         return "<input id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' type='text' value='"+str(self.texto)+"'  />"
     
     def propiedades(self):
-        return "e\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["texto"]=self.texto
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.texto=prop["texto"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Lista(ObjetoPrimario):
     def __init__(self,x):
@@ -214,9 +361,16 @@ class Lista(ObjetoPrimario):
         self.lista=""
         self.alto=3
         self.ancho=15
+        self._ide=x
+
+    def tipo(self):
+        return "lista"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
-    
     def trazaObjeto(self,archivo):
         a="<select id='"+str(self._nombre)+"'"+str(ObjetoPrimario.trazaObjeto(self))+" '   >"
         op=self.lista.split(",")
@@ -226,9 +380,17 @@ class Lista(ObjetoPrimario):
         return a
     
     def propiedades(self):
-        return "s\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.lista)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["lista"]=self.lista
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.lista=prop["lista"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
+
 
 class Check(ObjetoPrimario):
     def __init__(self,x):
@@ -239,17 +401,31 @@ class Check(ObjetoPrimario):
         self.alto=3
         self.ancho=15
         self.valor="0"
+        self._ide=x
+
+    def tipo(self):
+        return "check"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
-    
+
     def trazaObjeto(self,archivo):
         return "<input id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"' type='checkbox' value='"+str(self.valor)+"'  />"
     
     def propiedades(self):
-        return "k\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.valor)+"\n"
-        
-    nombre = property(obtenerNombre)
+        p=ObjetoPrimario.propiedades(self)
+        p["valor"]=self.valor
+        return p
 
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.valor=prop["valor"]
+    nombre = property(obtenerNombre)
+    ide= property(obtenerId)
+    
 class Area(ObjetoPrimario):
     def __init__(self,x):
         ObjetoPrimario.__init__(self)
@@ -259,6 +435,14 @@ class Area(ObjetoPrimario):
         self.colorBorde="defecto"
         self.alto=20
         self.ancho=15
+        self._ide=x
+
+    def tipo(self):
+        return "area"
+
+    def obtenerId(self):
+        return self._ide
+
     def obtenerNombre(self):
         return self._nombre
     
@@ -266,9 +450,17 @@ class Area(ObjetoPrimario):
      return "<textarea id='"+str(self._nombre)+"'"+str(ObjetoPrimario.trazaObjeto(self))+"'  >"+str(self.texto)+"</textarea>"
     
     def propiedades(self):
-        return "r\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.texto)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["texto"]=self.texto
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.texto=prop["texto"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
+
 
 class Proyecto(object):
     def __init__(self,nom,rut):
@@ -318,7 +510,14 @@ class Sonido(ObjetoPrimario):
         ObjetoPrimario.__init__(self)
         self._nombre="Sonido"+str(x)
         self.sonido=None
-        
+        self._ide=x
+
+    def tipo(self):
+        return "sonido"
+
+    def obtenerId(self):
+        return self._ide  
+
     def obtenerNombre(self):
         return self._nombre
     
@@ -326,9 +525,16 @@ class Sonido(ObjetoPrimario):
        return "<audio id='"+str(self._nombre)+"' "+str(ObjetoPrimario.trazaObjeto(self))+"><source src='"+str(archivo)+"/recursos/sonidos/"+str(self.sonido)+"' type='audio/ogg'   preload><source src='"+str(archivo)+"/recursos/sonidos/"+str(self.sonido)+"' type='audio/mpeg'   preload><source src='"+str(archivo)+"/recursos/sonidos/"+str(self.sonido)+"' type='audio/wav'   preload></audio>"
     
     def propiedades(self):
-         return "m\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.sonido)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["sonido"]=str(self.sonido)
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.sonido=prop["sonido"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
 
 class Video(ObjetoPrimario):
     def __init__(self,x):
@@ -337,13 +543,28 @@ class Video(ObjetoPrimario):
         self.video=None
         self.ancho=25
         self.alto=25
+        self._ide=x
+
+    def tipo(self):
+        return "video"
+
+    def obtenerId(self):
+        return self._ide  
+
     def obtenerNombre(self):
         return self._nombre
-    
+
     def trazaObjeto(self,archivo):
        return "<video id='"+str(self._nombre)+"' class='tiempoDiseno' style='position:absolute;background-color:black;top:"+str(self.y)+"%;left:"+str(self.x)+"%' width='"+str(self.ancho)+"%' height='"+str(self.alto)+"%'><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='video/ogg'   preload><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='audio/mp4'   preload><source src='"+str(archivo)+"/recursos/videos/"+str(self.video)+"' type='video/webm'   preload></video>"
     
     def propiedades(self):
-         return "v\\"+ObjetoPrimario.propiedades(self)+"\\"+str(self.video)+"\n"
-    
+        p=ObjetoPrimario.propiedades(self)
+        p["video"]=str(self.video)
+        return p
+
+    def asignaPropiedades(self,prop):
+        ObjetoPrimario.asignaPropiedades(self,prop)
+        self.video=prop["video"]
+
     nombre = property(obtenerNombre)
+    ide= property(obtenerId)
