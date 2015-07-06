@@ -2,7 +2,7 @@
 import webkit
 import gtk
 import glib
-import os
+import os, shutil
 ruta= os.path.dirname(os.path.realpath(__file__))
 
 class Ventana:
@@ -376,6 +376,8 @@ class Ventana:
         #mostramos la ventana
         self.window.add(tabla)
         self.window.show_all()
+        #control para el proyecto activo
+        self.proy=None
     
     def cuadroMensajes(self,titulo,mensaje,tipo,botones):
         men=gtk.MessageDialog(self.window, gtk.DIALOG_MODAL,tipo, botones,mensaje)
@@ -387,6 +389,10 @@ class Ventana:
     def cuadroDialogo(self,titulo,accion,botones):
         dialogo = gtk.FileChooserDialog(titulo,self.window,accion,botones)
         dialogo.set_current_folder(os.path.expanduser('~'))
+        filtro=gtk.FileFilter()
+        filtro.set_name("Proyectos GenCED")
+        filtro.add_pattern("*.gcd")
+        dialogo.add_filter(filtro)
         response = dialogo.run()
         archivo=dialogo.get_filename()
         dialogo.destroy()
@@ -396,9 +402,13 @@ class Ventana:
         respuesta =self.cuadroMensajes("Confirmación de Salida","¿Está Seguro de Querer Salir del Programa?\nAsegurese de haber guardado los cambios en el proyecto",gtk.MESSAGE_INFO,gtk.BUTTONS_YES_NO)
         if respuesta == gtk.RESPONSE_YES:
             if data==2:
+                if self.proy!=None:
+                    shutil.rmtree(str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proy)
                 gtk.main_quit()
             return False
         else:
+            if self.proy!=None:
+                shutil.rmtree(str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proy)
             return True
 
     def destroy(self, widget):
