@@ -8,17 +8,13 @@ from analizador import *
 class Acciones:
     
     def __init__(self,IGU):
-        #self.rutaProyecto=None
-        #self.nombreProyecto=None
-        #self.hojas=[]
         self.proyecto=None
-        self.recursos=[]
-        self.objetos={"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivo":[]}
+        self.objetos={"Proyecto":{"ancho":640,"alto":480,"maximizado":"Falso"},"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivos":[]}
+        self.seleccionado=None
         self.EDITADO=0
         self.puntero=-1
         self.nivel=-1
         self.igu=IGU
-        self.__elimi=False
         self.__copi=None
         self.activaAccionMenu()
         self.activaBotonesBarra()
@@ -408,38 +404,45 @@ class Acciones:
             self.igu.statusbar.push(0,"Tipo No Reconocido")
     
     def vistaPrevia(self,widget,data=None):
-        if self.proyecto=="":
+        if self.proyecto==None:
             self.igu.statusbar.push(0,"¿Cuál Proyecto vas a Ejecutar?")
             return
-        for i in range(len(self.objetos)):
-            pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script type='text/javascript' src='"+self.proyecto.ruta+"/recursos/jquery.timer.js'></script>"+self.objetos[i][0].javascript+"</head>"
-            for j in range(len(self.objetos[i])):
-                if len(self.objetos[i])==0: #si no tiene objetos no intente acceder a ellos
-					break
-                pagina=pagina+str(self.objetos[i][j].trazaObjeto(self.proyecto.ruta))
+        self.proyecto.paginas[:]=[]
+        rutaTemporal=str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre
+        i=0
+        for d in self.objetos["Hojas"]:
+            pagina="<html><head><script src='"+rutaTemporal+"/recursos/jquery.js'></script><script type='text/javascript' src='"+rutaTemporal+"/recursos/jquery.timer.js'></script></head>"
+            pagina+=d["objeto"].trazaObjeto(rutaTemporal)
+            for e in self.objetos["Hojas"][i]["hijos"]:
+                pagina+= e["objeto"].trazaObjeto(rutaTemporal)
             pagina=pagina+"</body></html>"
-            self.proyecto.paginas[i]=pagina
+            print pagina
+            self.proyecto.paginas.append(pagina)
             pagina=""
+            i+=1
         self.proyecto.ejecutar()
-    
+
     def presionaTecla(self,widget,event):
         keycode = gtk.gdk.keyval_to_upper(event.keyval)
         #65362 up,65364 dw,65361 lf,65363 rg
-        if keycode==65361:
-            self.objetos[self.nivel[2]][self.nivel[3]+1].x=float(self.objetos[self.nivel[2]][self.nivel[3]+1].x)-0.2
-        if keycode==65362:
-            self.objetos[self.nivel[2]][self.nivel[3]+1].y=float(self.objetos[self.nivel[2]][self.nivel[3]+1].y)-0.2
-        if keycode==65363:
-            self.objetos[self.nivel[2]][self.nivel[3]+1].x=float(self.objetos[self.nivel[2]][self.nivel[3]+1].x)+0.2
-        if keycode==65364:
-            self.objetos[self.nivel[2]][self.nivel[3]+1].y=float(self.objetos[self.nivel[2]][self.nivel[3]+1].y)+0.2
-        self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]+1])
-        self.actulizaLienzo()
+        if self.seleccionado!=None:
+            if keycode==65361:
+                self.seleccionado.x=float(self.seleccionado.x)-0.2
+            if keycode==65362:
+                self.seleccionado.y=float(self.seleccionado.y)-0.2
+            if keycode==65363:
+                self.seleccionado.x=float(self.seleccionado.x)+0.2
+            if keycode==65364:
+                self.seleccionado.y=float(self.seleccionado.y)+0.2
+            self.actualizaVistaPropiedades()
+            self.actulizaLienzo()
         #print keycode
     
     def presionaRaton(self,widget,event):
         assert event.type == gtk.gdk.BUTTON_PRESS
-        self.igu.statusbar.push(0, 'Clicked at x={0}, y={0}'.format(event.x, event.y))
+        f=widget.get_main_frame()
+        print f.__dict__
+        self.igu.statusbar.push(0, 'Clicked at x={0}, y={1}'.format(event.x, event.y))
         #self.igu.cuadroDialogoScript()
         #self.igu.lienzo.execute_script('tag= window.document.element.nodeName;alert("El elemento selecionado ha sido " + tag);')
         
@@ -464,11 +467,21 @@ class Acciones:
         if variables[0]=='0':
             self.verImagenes(widget,variables[1])
         elif variables[0]=='1':
-            for i in range(len(self.objetos[self.puntero])):
-                if self.objetos[self.puntero][i].nombre==variables[1]:
-                    self.actualizaVistaPropiedades(self.objetos[self.puntero][i])
-                    self.igu.treeview.set_cursor((0,0,self.puntero,i-1))
+            i=0
+            for d in self.objetos["Hojas"]:
+                if self.puntero==i:
+                    j=0
+                    for e in self.objetos["Hojas"][i]["hijos"]:
+                        if e["objeto"].nombre==variables[1]:
+                            self.seleccionado=e["objeto"]
+                            self.actualizaVistaPropiedades()
+                            self.igu.treeview.expand_all()
+                            self.igu.treeview.set_cursor((0,0,self.puntero,j))
+                            break
+                        j+=1
                     break
+                i+=1
+                
         elif variables[0]=='2':
             pagina="<html><head><title></title></head>"
             pagina=pagina+"<img src='"+os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(variables[1])+"/"+str(variables[2])+"'/>"
@@ -483,13 +496,16 @@ class Acciones:
             else:
                 archivo=variables[1]
                 par=variables[1].split("/")[1]
-                destino=self.proyecto.ruta+"/recursos/imagenes/"+par
+                destino=str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre+"/recursos/imagenes/"+par
                 origen=os.path.dirname(os.path.realpath(__file__))+"/recursos/imagenes/"+str(variables[1])
                 shutil.copy(origen,destino)
-                self.recursos[0].append(par)
+                self.objetos["Imagenes"].append(str(par))
                 self.actualizaArbol()
-                self.guardarProyecto()
                 self.igu.statusbar.push(0,"Insertada la Imagen "+str(par));
+                self.igu.barraGua.set_sensitive(True)
+                self.igu.barraGuc.set_sensitive(True)
+                self.igu.gua.set_sensitive(True)
+                self.igu.guc.set_sensitive(True)
         else:
             self.igu.statusbar.push(0,"No se que hacer!!!");
         
@@ -509,124 +525,65 @@ class Acciones:
         self.igu.barraSonidoNuevo.connect("clicked",self.insertarRecurso,1)
         self.igu.barraVideoNuevo.connect("clicked",self.insertarRecurso,2)
         self.igu.barraArchivoNuevo.connect("clicked",self.insertarRecurso,3)
-        self.igu.barraRectangulo.connect("clicked",self.insertarObjeto,0)
-        self.igu.barraCirculo.connect("clicked",self.insertarObjeto,1)
-        self.igu.barraTriangulo.connect("clicked",self.insertarObjeto,2)
-        self.igu.barraLinea.connect("clicked",self.insertarObjeto,3)
-        self.igu.barraImagen.connect("clicked",self.insertarObjeto,4)
-        self.igu.barraTexto.connect("clicked",self.insertarObjeto,5)
-        self.igu.barraBoton.connect("clicked",self.insertarObjeto,6)
-        self.igu.barraCajaTexto.connect("clicked",self.insertarObjeto,7)
-        self.igu.barraLista.connect("clicked",self.insertarObjeto,8)
-        self.igu.barraCheck.connect("clicked",self.insertarObjeto,9)
-        self.igu.barraArea.connect("clicked",self.insertarObjeto,10)
-        self.igu.barraSon.connect("clicked",self.insertarObjeto,11)
-        self.igu.barraCla.connect("clicked",self.insertarObjeto,12)
-        self.igu.barraScr.connect("clicked",self.insertarObjeto,13)
+        self.igu.barraRectangulo.connect("clicked",self.insertarObjeto,"cuadro")
+        self.igu.barraCirculo.connect("clicked",self.insertarObjeto,"circulo")
+        self.igu.barraTriangulo.connect("clicked",self.insertarObjeto,"triangulo")
+        self.igu.barraLinea.connect("clicked",self.insertarObjeto,"linea")
+        self.igu.barraImagen.connect("clicked",self.insertarObjeto,"imagen")
+        self.igu.barraTexto.connect("clicked",self.insertarObjeto,"texto")
+        self.igu.barraBoton.connect("clicked",self.insertarObjeto,"boton")
+        self.igu.barraCajaTexto.connect("clicked",self.insertarObjeto,"entrada")
+        self.igu.barraLista.connect("clicked",self.insertarObjeto,"lista")
+        self.igu.barraCheck.connect("clicked",self.insertarObjeto,"check")
+        self.igu.barraArea.connect("clicked",self.insertarObjeto,"area")
+        self.igu.barraSon.connect("clicked",self.insertarObjeto,"sonido")
+        self.igu.barraCla.connect("clicked",self.insertarObjeto,"video")
+        self.igu.barraScr.connect("clicked",self.insertarObjeto,"codigo")
 
     def copiarObjeto(self,widget=None,data=None):
-        if self.proyecto=="":
+        if self.proyecto==None:
             self.igu.statusbar.push(0,"¿Que intentas copiar?")
-            return
-        if len(self.nivel)==4:
-            if self.nivel[1]==0:
-                self.__copi=self.objetos[self.nivel[2]][self.nivel[3]+1]
-                self.igu.statusbar.push(0, "El tipo de objeto a copiar es: "+self.__copi.nombre)
-            else:
-                self.igu.statusbar.push(0, "Objeto no Copiable")
+        elif self.seleccionado==None:
+            self.igu.statusbar.push(0,"Selecciona un objeto primero!!!")
         else:
-            self.igu.statusbar.push(0, "Objeto no Copiable")
-    
+            if self.seleccionado.__class__==Proyecto:
+                self.igu.statusbar.push(0,"Un proyecto no se puede copiar!!!")
+            else:
+                self.igu.statusbar.push(0, "Objeto a copiar: "+self.seleccionado.nombre)
+                self.__copi=self.seleccionado
+
     def pegarObjeto(self,widget=None,data=None):
-        if self.proyecto=="":
-            self.igu.statusbar.push(0,"¿Qué Intentas Pegar?")
-            return
-        if len(self.nivel)==4:
-            if self.nivel[1]==0:
-                self.igu.statusbar.push(0, "El tipo de objeto pegado es: "+self.__copi.nombre+" en la "+str(self.objetos[self.nivel[2]][0].nombre))
-                objeto=self.__copi
-                if objeto.__class__==Cuadro:
-                    nuevoObjeto=Cuadro(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])+1
-                    
-                if objeto.__class__==Circulo:
-                    nuevoObjeto=Circulo(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])+1
-                    nuevoObjeto.radio=objeto.radio
-        
-                if objeto.__class__==Triangulo:
-                    nuevoObjeto=Triangulo(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])+1
-                
-                if objeto.__class__==Linea:
-                    nuevoObjeto=Linea(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["linea"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])+1
-                
-                if objeto.__class__==Imagen:
-                    nuevoObjeto=Imagen(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])+1
-                    nuevoObjeto.imagen=objeto.imagen
-                    nuevoObjeto.clip=objeto.clip
-                    nuevoObjeto.rt=objeto.rt
-                
-                if objeto.__class__==Texto:
-                    nuevoObjeto=Texto(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["texto"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])+1
-                    nuevoObjeto.tamanoTexto=objeto.tamanoTexto
-                    nuevoObjeto.colorTexto=objeto.colorTexto
-                    nuevoObjeto.fuente=objeto.fuente
-                    nuevoObjeto.alineacion=objeto.alineacion
-                    nuevoObjeto.texto=objeto.texto
-                    
-                if objeto.__class__==Boton:
-                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["boton"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["boton"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["boton"])+1
-
-                if objeto.__class__==Entrada:
-                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"])+1
-
-                if objeto.__class__==Lista:
-                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["lista"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["lista"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["lista"])+1
-
-                if objeto.__class__==Check:
-                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["check"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["check"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["check"])+1
-
-                if objeto.__class__==Area:
-                    nuevoObjeto=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])
-                    self.objetos[self.nivel[2]][0].cuentaObjetos["area"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])+1
-                
-                self.objetos[self.puntero].append(nuevoObjeto)
-                nuevoObjeto.colorFondo=objeto.colorFondo
-                nuevoObjeto.transparencia=objeto.transparencia
-                nuevoObjeto.ancho=objeto.ancho
-                nuevoObjeto.alto=objeto.alto
-                nuevoObjeto.x=objeto.x
-                nuevoObjeto.y=float(objeto.y)+5
-                nuevoObjeto.borde=objeto.borde
-                nuevoObjeto.colorBorde=objeto.colorBorde
-                nuevoObjeto.anchoBorde=objeto.anchoBorde
-                nuevoObjeto.sombra=objeto.sombra
-                nuevoObjeto.rotar=objeto.rotar
-                nuevoObjeto.oculto=objeto.oculto
-                nuevoObjeto.tip=objeto.tip
-                nuevoObjeto.etiqueta=objeto.etiqueta
-                nuevoObjeto.borde=objeto.borde
-
-                self.actualizaArbol()
-                self.EDITADO=0
-                self.igu.barraGua.set_sensitive(True)
-                self.igu.barraGuc.set_sensitive(True)
-                self.igu.gua.set_sensitive(True)
-                self.igu.guc.set_sensitive(True)
-                self.actulizaLienzo()
-            else:
-                self.igu.statusbar.push(0, "Imposible Pegar Fuera de Una hoja")
+        if self.proyecto==None:
+            self.igu.statusbar.push(0,"No hay proyecto activo")
+        elif self.__copi==None:
+            self.igu.statusbar.push(0, "Copie un objeto Primero!!!")
         else:
-            self.igu.statusbar.push(0, "Imposible Pegar Fuera de Una hoja")
-
+            if self.__copi.__class__==Escena:
+                ref= len(self.objetos["Hojas"])
+                self.insertarHoja()
+                self.puntero=ref
+                self.objetos["Hojas"][ref]["objeto"].asignaPropiedades(self.__copi.propiedades())
+                j=0
+                for i in self.objetos["Hojas"]:
+                    print j
+                    if i["objeto"]==self.__copi:
+                        for k in i["hijos"]:
+                            self.insertarObjeto(None,k["tipo"])
+                            self.objetos["Hojas"][ref]["hijos"][j]["objeto"].asignaPropiedades(k["objeto"].propiedades())
+                            j+=1
+                        break
+                self.igu.statusbar.push(0, "Copiado de Hoja: OK")
+            else:
+                if len(self.nivel)<3:
+                    self.igu.statusbar.push(0, "No se puede copiar en este nivel")
+                elif self.nivel[1]==1:
+                    self.igu.statusbar.push(0, "No se puede copiar en este nivel")
+                else:
+                    self.insertarObjeto(None,self.__copi.tipo())
+                    self.objetos["Hojas"][self.puntero]["hijos"][len(self.objetos["Hojas"][self.puntero]["hijos"])-1]["objeto"].asignaPropiedades(self.__copi.propiedades())
+                    self.igu.statusbar.push(0, "Copiado de Objeto "+str(self.__copi.tipo())+": OK")
+                    self.actulizaLienzo()
+        
     def nuevoProyecto(self,widget=None,data=None):
         #Si estamos en linux =)
         if str(os.name)== "posix":
@@ -641,10 +598,16 @@ class Acciones:
             if resp==gtk.RESPONSE_OK:
                 proyecto=str(dialogo.get_filename())
                 dialogo.destroy()
+                if os.path.isfile(str(proyecto)+".gcd"):
+                    md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ya existe un proyecto con este nombre")
+                    md.set_title("Error de Creacion de Proyecto")
+                    md.run()
+                    md.destroy()
+                    return
                 print "creo el proyecto en:"+str(proyecto)
                 nmb=proyecto.split("/")
                 print "nombre Proyecto:"+str(nmb[len(nmb)-1])
-                rutaTemporal=str(os.path.dirname(os.path.realpath(__file__)))+"/"+str(nmb[len(nmb)-1])+"TMP"
+                rutaTemporal=str(os.path.dirname(os.path.realpath(__file__)))+"/"+str(nmb[len(nmb)-1])
                 print "lso temporales en "+str(rutaTemporal)
                 try: #trato de crear las carpetas temporales en el path de GENCED
                     os.mkdir(rutaTemporal)
@@ -659,7 +622,7 @@ class Acciones:
                     md.set_title("Error de Creacion Directorios")
                     md.run()
                     md.destroy()
-                    self.igu.statusbar.push("Ocurrio un error al crear los directorios")
+                    self.igu.statusbar.push(0,"Ocurrio un error al crear los directorios")
                     return
                 try: #trato de copiar los archivos js a las carpetas temporales del proyecto
                     destino=os.path.join(rutaTemporal,"recursos/jquery.js")
@@ -675,176 +638,158 @@ class Acciones:
                     md.destroy()
                     self.igu.statusbar.push("Ocurrio un error al copiar los archivos de Javascript")
                     return
-                self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto+".gcd")
-                hoja=Escena(0)
-                self.objetos["Hojas"].append({"objeto":hoja,"hijos":[]})
-                
-                #print self.objetos
-                arc={"Proyecto":{"ancho":str(self.proyecto.ancho),"alto":str(self.proyecto.alto),"maximizado":str(self.proyecto.maximizado)},"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivo":[]},
+                self.proyecto=Proyecto(nmb[len(nmb)-1],proyecto+".gcd") #Se crea el objeto Proyecto
+                hoja=Escena(0) #Se crea la primera Hoja
+                self.objetos["Hojas"].append({"objeto":hoja,"hijos":[],"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"video":0,"sonido":0}) #Se anexa al diccionario de Objetos
                 i=0
+                parseJSON={"Proyecto":{"ancho":self.proyecto.ancho,"alto":self.proyecto.alto,"maximizado":self.proyecto.maximizado},"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivos":[]} #hacemos un parseo de objetos a entradas JSON serializables
                 for d in self.objetos["Hojas"]:
+                    h= {"hoja"+str(i):{"propiedades":d["objeto"].propiedades(),"elementos":[],"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"video":0,"sonido":0}}
+                    parseJSON["Hojas"].append(h)
+                    for e in self.objetos["Hojas"][i]["hijos"]:
+                        j={"prop":[e.propiedades()],"tipo":e.tipo()}
+                        parseJSON["Hojas"][i]["hoja"+str(i)]["elementos"].append(j)
                     i+=1
-                    h= {"hoja"+str(i):[d["objeto"].propiedades()]}
-                    print type(h)
-                    #arc["Hojas"].append(h)
-                
-                print json.dumps(arc)
-                shutil.rmtree(str(rutaTemporal))
-                return
-                
-                
-                if os.path.exists(proyecto):
-                    md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ya existe un proyecto con este nombre")
-                    md.set_title("Error de Creacion de Proyecto")
-                    md.run()
-                    md.destroy()
-                else:
-                                      
-                    try: #Trato de escribir el archivo de configuracion del proyecto
-                        conf=open(proyecto+"/conf/configuracion.txt","a")
-                        conf.write("GCEDV1.0"+"\n")
-                        conf.write("0\Hoja0\n")
-                        #Listas en Memoria de lo que contiene el proyecto hasta Ahora
-                        conf.write(hoja.propiedades())
-                        conf.close()
-                    except:
-                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error crear el archivo de configuracion")
-                        md.set_title("Error de Escritura de Archivos")
-                        md.run()
-                        md.destroy()
-                        self.igu.statusbar.push("Ocurrio un error crear el archivo de configuracion")
-                        return
-                    try: #Trato de escribir el archivo de escritos del proyecto
-                        conf=open(proyecto+"/conf/escrito0.gcd","a")
-                        conf.write("[s]")
-                        conf.close()
-                    except:
-                        md=gtk.MessageDialog(None, gtk.DIALOG_MODAL,gtk.MESSAGE_WARNING, gtk.BUTTONS_CLOSE,"Ocurrio un error crear el archivo de escritos")
-                        md.set_title("Error de Escritura de Archivos")
-                        md.run()
-                        md.destroy()
-                        self.igu.statusbar.push("Ocurrio un error crear el archivo de escritos")
-                        return
-                    tar = tarfile.open(self.proyecto.ruta, "w")
-                    carpeta=proyecto.split("/")
-                    tar.add(proyecto,arcname=str(carpeta[len(carpeta)-1][0:-3]))
-                    tar.close()
-                    
-                    self.objetos.append([hoja])
-                    self.recursos.append(["imagenes"])
-                    self.recursos.append(["sonidos"])
-                    self.recursos.append(["videos"])
-                    self.recursos.append(["archivos"])
-                    self.proyecto.paginas.append("<html></html>")
-                    self.actualizaArbol()
-                    self.igu.barraHojaNueva.set_sensitive(True)
-                    self.igu.barraImagenNuevo.set_sensitive(True)
-                    self.igu.barraSonidoNuevo.set_sensitive(True)
-                    self.igu.barraVideoNuevo.set_sensitive(True)
-                    self.igu.barraArchivoNuevo.set_sensitive(True)
-                    self.igu.cer.set_sensitive(True)
-                    self.igu.statusbar.push(0,"Se ha creado con Éxito el proyecto")
+                #creo el archivo de configuracion
+                with open(os.path.join(rutaTemporal,"conf/conf.cfg"), 'w') as f:
+                    f.write(unicode(json.dumps(parseJSON, ensure_ascii=False)))
+                #se crea el tar
+                tar = tarfile.open(self.proyecto.ruta, "w")
+                tar.add(rutaTemporal,arcname=str(nmb[len(nmb)-1]))
+                tar.close()
+                self.proyecto.paginas.append("<html></html>")
+                self.actualizaArbol()
+                self.igu.barraHojaNueva.set_sensitive(True)
+                self.igu.barraImagenNuevo.set_sensitive(True)
+                self.igu.barraSonidoNuevo.set_sensitive(True)
+                self.igu.barraVideoNuevo.set_sensitive(True)
+                self.igu.barraArchivoNuevo.set_sensitive(True)
+                self.igu.cer.set_sensitive(True)
+                self.igu.proy=self.proyecto.nombre
+                self.igu.statusbar.push(0,"Se ha creado con Éxito el proyecto")
             else:
                 dialogo.destroy()
                 self.igu.statusbar.push(0,"Se ha cancelado la creación del proyecto")
             
-    
     def actualizaArbol(self):
         almacen = gtk.TreeStore(str,str)
         padre=almacen.append(None,[self.proyecto.nombre,gtk.STOCK_FILE])
         f=almacen.append(padre,["Hojas",gtk.STOCK_DND_MULTIPLE])
-        for fila in range(len(self.objetos)):
+        i=0
+        for d in self.objetos["Hojas"]:
+            x=almacen.append(f,[d["objeto"].nombre,gtk.STOCK_DND])
+            #h= {"hoja"+str(i):{"propiedades":[d["objeto"].propiedades()],"elementos":[]}}
+            for e in self.objetos["Hojas"][i]["hijos"]:
+                almacen.append(x,[e["objeto"].nombre,gtk.STOCK_FILE])
+            i+=1
+        f=almacen.append(padre,["Recursos",gtk.STOCK_DIRECTORY])
+        x=almacen.append(f,["Imagenes",gtk.STOCK_OPEN])
+        for d in self.objetos["Imagenes"]:
+            almacen.append(x,[d,gtk.STOCK_CDROM])
+        x=almacen.append(f,["Sonidos",gtk.STOCK_OPEN])
+        for d in self.objetos["Sonidos"]:
+            almacen.append(x,[d,gtk.STOCK_CDROM])
+        x=almacen.append(f,["Videos",gtk.STOCK_OPEN])
+        for d in self.objetos["Videos"]:
+            almacen.append(x,[d,gtk.STOCK_CDROM])
+        x=almacen.append(f,["Archivos",gtk.STOCK_OPEN])
+        for d in self.objetos["Archivos"]:
+            almacen.append(x,[d,gtk.STOCK_CDROM])
+
+        '''for fila in range(len(self.objetos)):
             x=almacen.append(f,[self.objetos[fila][0].nombre,gtk.STOCK_DND])
             for i in range(len(self.objetos[fila])-1):
-                almacen.append(x,[self.objetos[fila][i+1].nombre,gtk.STOCK_FILE])
-        f=almacen.append(padre,["Recursos",gtk.STOCK_DIRECTORY])
-        
-        for fila in self.recursos:
-            x=almacen.append(f,[fila[0],gtk.STOCK_OPEN])
-            for i in range(len(fila)-1):
-                almacen.append(x,[fila[i+1],gtk.STOCK_CDROM])
+                almacen.append(x,[self.objetos[fila][i+1].nombre,gtk.STOCK_FILE])'''
         self.igu.treeview.set_model(almacen)
         self.igu.treeview.expand_all()
     
-
     def actulizaLienzo(self,tipo=0):
+        rutaTemporal=str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre
         marca=""
-        pagina="<html><head><script src='"+self.proyecto.ruta+"/recursos/jquery.js'></script><script>$(document).ready(function(){$('.tiempoDiseno').click(function(){document.title='1+'+$(this).attr('id');})})</script></head>"
+        pagina="<html><head><script src='"+str(os.path.dirname(os.path.realpath(__file__)))+"/recursos/js/jquery.js'></script><script>$(document).ready(function(){$('.tiempoDiseno').click(function(){document.title='1+'+$(this).attr('id');})})</script></head>"
         if tipo==0:
-            for i in range(len(self.objetos[self.puntero])):
-                if len(self.nivel)==4 and (self.nivel[3]+1)==i:
-                    x=float(self.objetos[self.nivel[2]][self.nivel[3]+1].x)-1
-                    y=float(self.objetos[self.nivel[2]][self.nivel[3]+1].y)-1
-                    w=float(self.objetos[self.nivel[2]][self.nivel[3]+1].ancho)+1.5
-                    h=float(self.objetos[self.nivel[2]][self.nivel[3]+1].alto)+1.5
-                    nm=self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
-                    if self.objetos[self.nivel[2]][self.nivel[3]+1].oculto=="Falso":
-                        marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dashed 2px red;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
-                    else:
-                        marca="<div style='position:absolute;font-size:10pt;top:"+str(y)+"%;left:"+str(x)+"%;border:dotted 2px black;width:"+str(w)+"%;height:"+str(h)+"%'></div>"
-                #print self.objetos[self.puntero][i]
-                pagina=pagina+self.objetos[self.puntero][i].trazaObjeto(self.proyecto.ruta)
-                pagina=pagina+marca
+            i=0
+            for d in self.objetos["Hojas"]:
+                if self.puntero==i:
+                    pagina+=d["objeto"].trazaObjeto(rutaTemporal)
+                    for e in self.objetos["Hojas"][i]["hijos"]:
+                        if e["objeto"]==self.seleccionado:
+                            marca="<div style='position:absolute;font-size:10pt;top:"+str(float(e["objeto"].y)-1)+"%;left:"+str(float(e["objeto"].x)-1)+"%;border:dotted 2px black;width:"+str(float(e["objeto"].ancho)+1.5)+"%;height:"+str(float(e["objeto"].alto)+1.5)+"%'></div>"
+                        pagina+= e["objeto"].trazaObjeto(rutaTemporal)
+                i+=1
+            pagina=pagina+marca+"</body></html>"
+            self.igu.lienzo.load_html_string(pagina,"file://"+rutaTemporal+"/")
         elif tipo==1:
-            recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-            pagina=pagina+"<img src='"+self.proyecto.ruta+"/recursos/imagenes/"+str(recurso)+"'/>"
+            recurso= self.objetos["Imagenes"][self.puntero]
+            pagina=pagina+"<img src='"+rutaTemporal+"/recursos/imagenes/"+str(recurso)+"'/>"
         elif tipo==2:
-            recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-            pagina=pagina+"<div><audio id='player' autoplay><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/ogg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/mpeg'   preload='none'><source src='"+self.proyecto.ruta+"/recursos/sonidos/"+str(recurso)+"' type='audio/wav'   preload='none'></audio></div><h3>"+str(recurso)+"</h3><button onclick=\"document.getElementById('player').play();\">Reproducir</button><button onclick=\"document.getElementById('player').pause();document.getElementById('player').currentTime=0;\">Detener</button><button onclick=\"document.getElementById('player').pause()\">Pausa</button><button onclick=\"document.getElementById(\'player\').volume += 0.1;\">Subir Volumen</button><button onclick=\"document.getElementById(\'player\').volume -= 0.1;\">Bajar Volumen</button>"
+            recurso= self.objetos["Sonidos"][self.puntero]
+            pagina=pagina+"<div><audio id='player' autoplay preload><source src='"+rutaTemporal+"/recursos/sonidos/"+str(recurso)+"' type='audio/ogg'   preload><source src='"+rutaTemporal+"/recursos/sonidos/"+str(recurso)+"' type='audio/mpeg'   preload><source src='"+rutaTemporal+"/recursos/sonidos/"+str(recurso)+"' type='audio/wav'   preload></audio></div><h3>"+str(recurso)+"</h3><button onclick=\"document.getElementById('player').play();\">Reproducir</button><button onclick=\"document.getElementById('player').pause();document.getElementById('player').currentTime=0;\">Detener</button><button onclick=\"document.getElementById('player').pause()\">Pausa</button><button onclick=\"document.getElementById(\'player\').volume += 0.1;\">Subir Volumen</button><button onclick=\"document.getElementById(\'player\').volume -= 0.1;\">Bajar Volumen</button>"
         elif tipo==3:
-            recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-            pagina=pagina+"<div style='background-color:black'><video autoplay preload='auto' heigth='75%' width='75%'><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/ogg' ><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/mp4'><source src='"+self.proyecto.ruta+"/recursos/videos/"+str(recurso)+"' type='video/webm'>No soportado video</video><div style='clear:both'></div></div><h3>"+str(recurso)+"</h3>"
+            recurso= self.objetos["Videos"][self.puntero]
+            pagina=pagina+"<div style='background-color:black'><video autoplay preload='auto' heigth='75%' width='75%'><source src='"+rutaTemporal+"/recursos/videos/"+str(recurso)+"' type='video/ogg' ><source src='"+rutaTemporal+"/recursos/videos/"+str(recurso)+"' type='video/mp4'><source src='"+rutaTemporal+"/recursos/videos/"+str(recurso)+"' type='video/webm'>No soportado video</video><div style='clear:both'></div></div><h3>"+str(recurso)+"</h3>"
         elif tipo==4:
-            recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-            pagina=pagina+"<div><style>@font-face{font-family:'fuente';src: url('"+self.proyecto.ruta+"/recursos/archivos/"+str(recurso)+"')}</style></div><h3 style='font-family:fuente'>El niño Simón Bolívar, Tocaba alegre el tambor, en un patio de granados, que siempre estaban en flor</h3><h4 style='font-family:fuente'>Pero un día se hizo grande, el que fue niño Simón y anduvo por America cuando era Libertador</h4>"
+            recurso= self.objetos["Archivos"][self.puntero]
+            pagina=pagina+"<div><style>@font-face{font-family:'fuente';src: url('"+rutaTemporal+"/recursos/archivos/"+str(recurso)+"')}</style></div><h3 style='font-family:fuente'>El niño Simón Bolívar, Tocaba alegre el tambor, en un patio de granados, que siempre estaban en flor</h3><h4 style='font-family:fuente'>Pero un día se hizo grande, el que fue niño Simón y anduvo por America cuando era Libertador</h4>"
 
         pagina=pagina+"</body></html>"
-        self.igu.lienzo.load_html_string(pagina,"file://"+self.proyecto.ruta+"/")
-        
-    def guardarProyecto(self,widget=None):
+        self.igu.lienzo.load_html_string(pagina,"file://"+rutaTemporal+"/")
+        self.igu.statusbar.push(0,"Vista Diseño")
+
+    def guardarProyecto(self,widget=None):#lista
         #Rutina para Escribir el archivo de Configuracion
         if str(os.name)== "posix":
-            conf=open(self.proyecto.ruta+"/conf/configuracion.txt","w")
-            conf.write("GCEDV1.0"+"\n")
-            conf.write("pr\\"+str(self.proyecto.ancho)+"\\"+str(self.proyecto.alto)+"\\"+str(self.proyecto.maximizado)+"\n")
-            for fila in range(len(self.objetos)):
-                conf.write("0\\"+str(self.objetos[fila][0].nombre)+"\n")
-                esc=open(self.proyecto.ruta+"/conf/escrito"+str(fila)+".gcd","w")
-                esc.write(self.objetos[fila][0].escritos)
-                esc.write("[s]")
-                esc.write(self.objetos[fila][0].javascript)
-                esc.close()
-                #gp=open(self.rutaProyecto+"/app/"+str(self.objetos[fila][0].nombre),"w")
-                #gp.write(self.objetos[fila][0].nombre+"\n")
-                conf.write(self.objetos[fila][0].propiedades())
-                for i in range(len(self.objetos[fila])-1):
-                    conf.write(self.objetos[fila][i+1].propiedades())
-                #gp.close()
-                #conf.write("0\\"+str(self.objetos[fila][0].nombre)+"\n")
-            n=0
-            for fila in self.recursos:
-                n=n+1
-                for i in range(len(fila)-1):
-                    conf.write(str(n)+"\\"+fila[i+1]+"\n")
-            conf.close()
+            parseJSON={"Proyecto":{"ancho":self.proyecto.ancho,"alto":self.proyecto.alto,"maximizado":self.proyecto.maximizado},"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivos":[]} #hacemos un parseo de objetos a entradas JSON serializables
+            print self.objetos["Hojas"]
+            i=0
+            for d in self.objetos["Hojas"]:
+                h= {"hoja"+str(d["objeto"].nombre[4:]):{"propiedades":d["objeto"].propiedades(),"elementos":[]}}
+                parseJSON["Hojas"].append(h)
+                for e in self.objetos["Hojas"][i]["hijos"]:
+                    j={"prop":e["objeto"].propiedades(),"tipo":e["objeto"].tipo(),"id":e["objeto"].ide}
+                    parseJSON["Hojas"][i]["hoja"+str(i)]["elementos"].append(j)
+                i+=1
+            for d in self.objetos["Imagenes"]:
+                parseJSON["Imagenes"].append(d)
+            for d in self.objetos["Sonidos"]:
+                parseJSON["Sonidos"].append(d)
+            for d in self.objetos["Videos"]:
+                parseJSON["Videos"].append(d)
+            for d in self.objetos["Archivos"]:
+                parseJSON["Archivos"].append(d)
+            rutaTemporal=str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre
+            print rutaTemporal
+            #creo el archivo de configuracion
+            with open(os.path.join(rutaTemporal,"conf/conf.cfg"), 'w') as f:
+                f.write(unicode(json.dumps(parseJSON, ensure_ascii=False)))
+            #actualizo el tar
+            tar = tarfile.open(str(self.proyecto.ruta), "w")
+            tar.add(rutaTemporal,self.proyecto.nombre)
+            tar.close()
             self.EDITADO=0
             self.igu.barraGua.set_sensitive(False)
             self.igu.barraGuc.set_sensitive(False)
             self.igu.gua.set_sensitive(False)
             self.igu.guc.set_sensitive(False)
+            self.igu.statusbar.push(0,"Guardaddo con exito el proyecto")
    
     def cerrarProyecto(self,widget=None,data=None):
-        self.proyecto=""
-        del self.recursos[:]
-        del self.objetos[:]
+        shutil.rmtree(str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre)
+        self.igu.proy=None
+        self.proyecto=None
+        self.seleccionado=None
+        self.objetos.clear()
+        self.objetos={"Proyecto":{"ancho":640,"alto":480,"maximizado":"Falso"},"Hojas":[],"Imagenes":[],"Sonidos":[],"Videos":[],"Archivos":[]}
         self.EDITADO=0
         self.puntero=-1
         self.nivel=-1
         self.igu.cer.set_sensitive(False)
         ls=self.igu.treeview.get_model()
-        ls.clear()
+        if ls!=None:
+            ls.clear()
         ls=self.igu.panelPropiedades.get_model()
-        ls.clear()
+        if ls!=None:
+            ls.clear()
         self.igu.barraRectangulo.set_sensitive(False)
         self.igu.barraCirculo.set_sensitive(False)
         self.igu.barraTriangulo.set_sensitive(False)
@@ -868,276 +813,88 @@ class Acciones:
         self.igu.statusbar.push(0,"Proyecto Cerrado")
         
     def abrirProyecto(self,widget=None,data=None):
-        if self.proyecto!="":
+        if self.proyecto!=None:
             self.igu.cuadroMensajes("Proyecto Abierto","Ya hay un Proyecto abierto\n por favor cierrelo antes de abrir otro",gtk.MESSAGE_WARNING,gtk.BUTTONS_OK)
             return
         response=self.igu.cuadroDialogo("Abrir Proyecto",gtk.FILE_CHOOSER_ACTION_OPEN,(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,gtk.STOCK_OPEN,gtk.RESPONSE_OK))
         if response[0] == gtk.RESPONSE_OK:
+            nmb=response[1].split("/")
+            nombre=nmb[len(nmb)-1][0:-4]
+            rt=os.path.dirname(os.path.realpath(__file__))
             tar = tarfile.open(str(response[1]), "r")
-            nmb=response[1].split("/")
-            archivo=tar.getmember(nmb[len(nmb)-1][0:-4]+"/conf/configuracion.txt")
-            conf=tar.extractfile(archivo)
-            linea = conf.readline()[:-1]
-            if linea!="GCEDV1.0":
-                self.igu.cuadroMensajes("Error Apertura de Proyecto","Este no es un Proyecto de CED",gtk.MESSAGE_WARNING,gtk.BUTTONS_CLOSE)
-                return
-            nmb=response[1].split("/")
-            self.proyecto=Proyecto(nmb[len(nmb)-1][0:-4],response[1])
-            self.recursos.append(["imagenes"])
-            self.recursos.append(["sonidos"])
-            self.recursos.append(["videos"])
-            self.recursos.append(["archivos"])
-            i=0
-            ind=-1
-            while linea != "":
-                linea = conf.readline()[:-1]
-                x=linea.split("\\")
-                if x[0]=="pr":
-                    self.proyecto.ancho=x[1]
-                    self.proyecto.alto=x[2]
-                    self.proyecto.maximizado=x[3]
-                if x[0]=="0":
-                    hoja=Escena(len(self.objetos))
-                    ind=ind+1
-                    self.proyecto.paginas.append("")
-                if x[0]=="p":
-                    hoja.colorFondo=x[1]
-                    hoja.transparencia=x[2]
-                    hoja.imagen=x[3]
-                    hoja.ajusteImagen=x[4]
-                    archivo=tar.getmember(nmb[len(nmb)-1][0:-4]+"/conf/escrito"+str(ind)+".gcd")
-                    contenido=tar.extractfile(archivo).read()
-                    dupla=contenido.split("[s]")
-                    hoja.escritos=dupla[0]
-                    hoja.javascript=dupla[1]
-                    self.objetos.append([hoja])
-                if x[0]=="c":
-                    obj=Cuadro(self.objetos[ind][0].cuentaObjetos["cuadro"])
-                    self.objetos[ind][0].cuentaObjetos["cuadro"]=int(self.objetos[ind][0].cuentaObjetos["cuadro"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.borde=x[7]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="o":
-                    obj=Circulo(self.objetos[ind][0].cuentaObjetos["circulo"])
-                    self.objetos[ind][0].cuentaObjetos["circulo"]=int(self.objetos[ind][0].cuentaObjetos["circulo"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.borde=x[7]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.radio=x[15]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="t":
-                    obj=Triangulo(self.objetos[ind][0].cuentaObjetos["triangulo"])
-                    self.objetos[ind][0].cuentaObjetos["triangulo"]=int(self.objetos[ind][0].cuentaObjetos["triangulo"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.borde=x[7]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="i":
-                    obj=Imagen(self.objetos[ind][0].cuentaObjetos["imagen"])
-                    self.objetos[ind][0].cuentaObjetos["imagen"]=int(self.objetos[ind][0].cuentaObjetos["imagen"])+1
-                    obj.transparencia=x[1]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.borde=x[7]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.imagen=x[15]
-                    obj.clip=x[16]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="l":
-                    obj=Linea(self.objetos[ind][0].cuentaObjetos["linea"])
-                    self.objetos[ind][0].cuentaObjetos["linea"]=int(self.objetos[ind][0].cuentaObjetos["linea"])+1
-                    obj.ancho=x[3]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.borde=x[7]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra==x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                    
-                if x[0]=="x":
-                    obj=Texto(self.objetos[ind][0].cuentaObjetos["texto"])
-                    self.objetos[ind][0].cuentaObjetos["texto"]=int(self.objetos[ind][0].cuentaObjetos["texto"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.borde=x[7]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.texto=x[15]
-                    obj.tamanoTexto=x[16]
-                    obj.colorTexto=x[17]
-                    obj.fuente=x[18]
-                    obj.alineacion=x[19]
-                    obj.parrafo=x[20]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="b":
-                    obj=Boton(self.objetos[ind][0].cuentaObjetos["boton"])
-                    self.objetos[ind][0].cuentaObjetos["boton"]=int(self.objetos[ind][0].cuentaObjetos["boton"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.texto=x[15]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="e":
-                    obj=Entrada(self.objetos[ind][0].cuentaObjetos["entrada"])
-                    self.objetos[ind][0].cuentaObjetos["entrada"]=int(self.objetos[ind][0].cuentaObjetos["entrada"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.texto=x[15]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="s":
-                    obj=Lista(self.objetos[ind][0].cuentaObjetos["lista"])
-                    self.objetos[ind][0].cuentaObjetos["lista"]=int(self.objetos[ind][0].cuentaObjetos["lista"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.lista=x[15]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="k":
-                    obj=Check(self.objetos[ind][0].cuentaObjetos["check"])
-                    self.objetos[ind][0].cuentaObjetos["check"]=int(self.objetos[ind][0].cuentaObjetos["check"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.valor=x[15]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="r":
-                    obj=Area(self.objetos[ind][0].cuentaObjetos["area"])
-                    self.objetos[ind][0].cuentaObjetos["area"]=int(self.objetos[ind][0].cuentaObjetos["area"])+1
-                    obj.colorFondo=x[1]
-                    obj.transparencia=x[2]
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.colorBorde=x[8]
-                    obj.anchoBorde=x[9]
-                    obj.sombra=x[10]
-                    obj.rotar=x[11]
-                    obj.oculto=x[12]
-                    obj.texto=x[15]
-                    obj.tip=x[13]
-                    obj.etiqueta=x[14]
-                    self.objetos[ind].append(obj)
-                if x[0]=="m":
-                    obj=Sonido(self.objetos[ind][0].cuentaObjetos["sonido"])
-                    self.objetos[ind][0].cuentaObjetos["sonido"]=int(self.objetos[ind][0].cuentaObjetos["sonido"])+1
-                    obj.sonido=x[15]
-                    self.objetos[ind].append(obj)
-                if x[0]=="v":
-                    obj=Video(self.objetos[ind][0].cuentaObjetos["video"])
-                    self.objetos[ind][0].cuentaObjetos["video"]=int(self.objetos[ind][0].cuentaObjetos["video"])+1
-                    obj.ancho=x[3]
-                    obj.alto=x[4]
-                    obj.x=x[5]
-                    obj.y=x[6]
-                    obj.video=x[15]
-                    self.objetos[ind].append(obj)
-                if x[0]=="1":
-                    self.recursos[0].append(x[1])
-                if x[0]=="2":
-                    self.recursos[1].append(x[1])
-                if x[0]=="3":
-                    self.recursos[2].append(x[1])
-                if x[0]=="4":
-                    self.recursos[3].append(x[1])
+            tar.extractall(rt)
             tar.close()
+            
+            #archivo=tar.getmember(nmb[len(nmb)-1][0:-4]+"/conf/conf.cfg")
+            with open(os.path.join(rt+"/"+nombre,"conf/conf.cfg")) as conf:    
+                parseDIC = json.load(conf)
+            self.proyecto=Proyecto(nombre,str(response[1]))
+            self.proyecto.alto= parseDIC["Proyecto"]["alto"]
+            self.proyecto.ancho= parseDIC["Proyecto"]["ancho"]
+            self.proyecto.maximizado= parseDIC["Proyecto"]["maximizado"]
+            self.objetos["Proyecto"]["alto"]=self.proyecto.alto
+            self.objetos["Proyecto"]["ancho"]=self.proyecto.ancho
+            self.objetos["Proyecto"]["maximizado"]=self.proyecto.maximizado
+            i=0
+            #print parseDIC["Hojas"].keys()
+            for d in parseDIC["Hojas"]:
+                print d.keys()[0]
+                hoja=Escena(d.keys()[0][4:])
+                hoja.asignaPropiedades(d[d.keys()[0]]["propiedades"])
+                self.objetos["Hojas"].append({"objeto":hoja,"hijos":[],"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"video":0,"sonido":0})
+                for e in parseDIC["Hojas"][i][d.keys()[0]]["elementos"]:
+                    if e["tipo"]=="cuadro":
+                        ob=Cuadro(int(e["id"]))
+                        self.objetos["Hojas"][i]["cuadro"]=e["id"]
+                    elif e["tipo"]=="circulo":
+                        ob=Circulo(int(e["id"]))
+                        self.objetos["Hojas"][i]["circulo"]=e["id"]
+                    elif e["tipo"]=="triangulo":
+                        ob=Triangulo(int(e["id"]))
+                        self.objetos["Hojas"][i]["triangulo"]=e["id"]
+                    elif e["tipo"]=="linea":
+                        ob=Linea(int(e["id"]))
+                        self.objetos["Hojas"][i]["linea"]=e["id"]
+                    elif e["tipo"]=="imagen":
+                        ob=Imagen(int(e["id"]))
+                        self.objetos["Hojas"][i]["imagen"]=e["id"]
+                    elif e["tipo"]=="texto":
+                        ob=Texto(int(e["id"]))
+                        self.objetos["Hojas"][i]["texto"]=e["id"]
+                    elif e["tipo"]=="boton":
+                        ob=Boton(int(e["id"]))
+                        self.objetos["Hojas"][i]["boton"]=e["id"]
+                    elif e["tipo"]=="entrada":
+                        ob=Entrada(int(e["id"]))
+                        self.objetos["Hojas"][i]["entrada"]=e["id"]
+                    elif e["tipo"]=="lista":
+                        ob=Lista(int(e["id"]))
+                        self.objetos["Hojas"][i]["lista"]=e["id"]
+                    elif e["tipo"]=="check":
+                        ob=Check(int(e["id"]))
+                        self.objetos["Hojas"][i]["check"]=e["id"]
+                    elif e["tipo"]=="area":
+                        ob=Area(int(e["id"]))
+                        self.objetos["Hojas"][i]["area"]=e["id"]
+                    elif e["tipo"]=="sonido":
+                        ob=Sonido(int(e["id"]))
+                        self.objetos["Hojas"][i]["sonido"]=e["id"]
+                    elif e["tipo"]=="video":
+                        ob=Video(int(e["id"]))
+                        self.objetos["Hojas"][i]["video"]=e["id"]
+                    ob.asignaPropiedades(e["prop"])
+                    j={"objeto":ob,"tipo":ob.tipo()}
+                    self.objetos["Hojas"][i]["hijos"].append(j)
+                i+=1
+            for d in parseDIC["Imagenes"]:
+                self.objetos["Imagenes"].append(d)
+            for d in parseDIC["Sonidos"]:
+                self.objetos["Sonidos"].append(d)
+            for d in parseDIC["Videos"]:
+                self.objetos["Videos"].append(d)
+            for d in parseDIC["Archivos"]:
+                self.objetos["Archivos"].append(d)
+            
             self.actualizaArbol()
             self.igu.barraHojaNueva.set_sensitive(True)
             self.igu.barraImagenNuevo.set_sensitive(True)
@@ -1145,17 +902,17 @@ class Acciones:
             self.igu.barraVideoNuevo.set_sensitive(True)
             self.igu.barraArchivoNuevo.set_sensitive(True)
             self.igu.cer.set_sensitive(True)
+            self.igu.proy=self.proyecto.nombre
+            self.igu.statusbar.push(0,"Proyecto Abierto"+str(self.proyecto.nombre))
         elif response[0] == gtk.RESPONSE_CANCEL:
-            print 'Closed, no files selected'
+            self.igu.statusbar.push(0,"Cancelado Abrir Proyecto")
      
-    def insertarHoja(self,widget=None,data=None):
+    def insertarHoja(self,widget=None,data=None): #LISTA
         #Insertamos una nueva hoja al proyecto
-        if self.proyecto!="":
-            hoja=Escena(str(len(self.objetos)))
-            self.objetos.append([hoja])
-            conf=open(self.proyecto.ruta+"/conf/escrito"+str(len(self.objetos)-1)+".gcd","a")
-            conf.write("[s]")
-            conf.close()
+        if self.proyecto!=None:
+            n= self.objetos["Hojas"][len(self.objetos["Hojas"])-1]["objeto"].nombre[4:]
+            hoja=Escena(int(n)+1)
+            self.objetos["Hojas"].append({"objeto":hoja,"hijos":[],"cuadro":0,"circulo":0,"triangulo":0,"linea":0,"imagen":0,"texto":0,"boton":0,"entrada":0,"lista":0,"check":0,"area":0,"video":0,"sonido":0})
             self.actualizaArbol()
             self.igu.barraGua.set_sensitive(True)
             self.igu.barraGuc.set_sensitive(True)
@@ -1166,82 +923,49 @@ class Acciones:
         else:
             self.igu.statusbar.push(0,"No hay proyecto para insertar Hojas")
     
-    def insertarObjeto(self,widget=None,data=None):
+    def insertarObjeto(self,w=None,data=None):
         #Insertamos los objetos
-        if self.proyecto=="":
+        if self.proyecto==None:
             self.igu.statusbar.push(0,"No hay proyecto para insertar objetos")
             return
-        if data==0:
-            cuadrado=Cuadro(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["cuadro"])+1
-            self.objetos[self.puntero].append(cuadrado)
-            self.igu.statusbar.push(0,"Insertamos un cuadrado o rectangulo")
-        if data==1:
-            circulo=Circulo(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["circulo"])+1
-            self.objetos[self.puntero].append(circulo)
-            self.igu.statusbar.push(0,"Insertamos un circulo")
-        if data==2:
-            triangulo=Triangulo(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["triangulo"])+1
-            self.objetos[self.puntero].append(triangulo)
-            self.igu.statusbar.push(0,"Insertamos un triangulo")
-        if data==3:
-            linea=Linea(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["linea"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["linea"])+1
-            self.objetos[self.puntero].append(linea)
-            self.igu.statusbar.push(0,"Insertamos una linea")
-        if data==4:
-            imagen=Imagen(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["imagen"])+1
-            self.objetos[self.puntero].append(imagen)
-            self.igu.statusbar.push(0,"Insertamos una imagen")
-        if data==5:
-            txt=Texto(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["texto"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["texto"])+1
-            self.objetos[self.puntero].append(txt)
-            self.igu.statusbar.push(0,"Insertamos un texto")
-        if data==6:
-            btn=Boton(self.objetos[self.nivel[2]][0].cuentaObjetos["boton"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["boton"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["boton"])+1
-            self.objetos[self.puntero].append(btn)
-            self.igu.statusbar.push(0,"Insertamos un Boton")
-        if data==7:
-            cja=Entrada(self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["entrada"])+1
-            self.objetos[self.puntero].append(cja)
-            self.igu.statusbar.push(0,"Insertamos una Caja de Texto")
-        if data==8:
-            lst=Lista(self.objetos[self.nivel[2]][0].cuentaObjetos["lista"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["lista"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["lista"])+1
-            self.objetos[self.puntero].append(lst)
-            self.igu.statusbar.push(0,"Insertamos una Lista Desplegable")
-        if data==9:
-            chk=Check(self.objetos[self.nivel[2]][0].cuentaObjetos["check"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["check"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["check"])+1
-            self.objetos[self.puntero].append(chk)
-            self.igu.statusbar.push(0,"Insertamos una Caja de Chequeo")
-        if data==10:
-            cja=Area(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["area"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["area"])+1
-            self.objetos[self.puntero].append(cja)
-            self.igu.statusbar.push(0,"Insertamos un Area de Edicion")
-        if data==11:
-            sonido=Sonido(self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["sonido"])+1
-            self.objetos[self.puntero].append(sonido)
-            self.igu.statusbar.push(0,"Insertamos un Sonido")
-        if data==12:
-            video=Video(self.objetos[self.nivel[2]][0].cuentaObjetos["video"])
-            self.objetos[self.nivel[2]][0].cuentaObjetos["video"]=int(self.objetos[self.nivel[2]][0].cuentaObjetos["video"])+1
-            self.objetos[self.puntero].append(video)
-            self.igu.statusbar.push(0,"Insertamos un video")
-        if data==13:
-            obj=[]
-            for i in range(len(self.objetos[self.puntero])):
-                obj.append(self.objetos[self.puntero][i])
-            #self.igu.cuadroDialogoScript(obj)
-            editorEscritos=Analizador(obj,self.recursos)
+        if data==None:
+            print "sin data"
+            return
+        elif data=="codigo":
+            editorEscritos=Analizador(self.objetos["Hojas"][self.puntero]["hijos"],self.objetos["Hojas"][self.puntero]["objeto"])
+            return
+        self.objetos["Hojas"][self.puntero][data]+=1
+        if data=="cuadro":
+            objeto=Cuadro(self.objetos["Hojas"][self.puntero][data])
+        elif data=="circulo":
+            objeto=Circulo(self.objetos["Hojas"][self.puntero][data])
+        elif data=="triangulo":
+            objeto=Triangulo(self.objetos["Hojas"][self.puntero][data])
+        elif data=="linea":
+            objeto=Linea((self.objetos["Hojas"][self.puntero][data]))
+        elif data=="imagen":
+            objeto=Imagen(self.objetos["Hojas"][self.puntero][data])
+        elif data=="texto":
+            objeto=Texto(self.objetos["Hojas"][self.puntero][data])
+        elif data=="boton":
+            objeto=Boton(self.objetos["Hojas"][self.puntero][data])
+        elif data=="entrada":
+            objeto=Entrada(self.objetos["Hojas"][self.puntero][data])
+        elif data=="lista":
+            objeto=Lista(self.objetos["Hojas"][self.puntero][data])
+        elif data=="check":
+            objeto=Check(self.objetos["Hojas"][self.puntero][data])
+        elif data=="area":
+            objeto=Area(self.objetos["Hojas"][self.puntero][data])
+        elif data=="sonido":
+            objeto=Sonido(self.objetos["Hojas"][self.puntero][data])
+        elif data=="video":
+            objeto=Video(self.objetos["Hojas"][self.puntero][data])
+        else:
+            self.igu.statusbar.push(0,"No se reconoce el tipo de objeto a insertar")
+            return
+        self.objetos["Hojas"][self.puntero]["hijos"].append({"objeto":objeto,"tipo":objeto.tipo()})
+        self.igu.statusbar.push(0,"Insertamos un "+str(objeto.tipo()))
         self.actualizaArbol()
         self.EDITADO=0
         self.igu.barraGua.set_sensitive(True)
@@ -1288,29 +1012,27 @@ class Acciones:
         if response == gtk.RESPONSE_OK:
             e=dialog.get_filename().split("/")
             archivo=e[len(e)-1]
+            tmp=str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre
             if data==0:
-                tar = tarfile.open(str(self.proyecto.ruta), "a")
-                tar.add(dialog.get_filename(),self.proyecto.nombre+"/recursos/imagenes/"+archivo)
-                tar.close()
+                destino=tmp+"/recursos/imagenes/"+archivo
+                origen=dialog.get_filename()
+                shutil.copy(origen,destino)
+                self.objetos["Imagenes"].append(str(archivo))
             elif data==1:
-                e=dialog.get_filename().split("/")
-                archivo=e[len(e)-1]
-                destino=self.proyecto.ruta+"/recursos/sonidos/"+archivo
+                destino=tmp+"/recursos/sonidos/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
+                self.objetos["Sonidos"].append(str(archivo))
             elif data==2:
-                e=dialog.get_filename().split("/")
-                archivo=e[len(e)-1]
-                destino=self.proyecto.ruta+"/recursos/videos/"+archivo
+                destino=tmp+"/recursos/videos/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
+                self.objetos["Videos"].append(str(archivo))
             elif data==3:
-                e=dialog.get_filename().split("/")
-                archivo=e[len(e)-1]
-                destino=self.proyecto.ruta+"/recursos/archivos/"+archivo
+                destino=tmp+"/recursos/archivos/"+archivo
                 origen=dialog.get_filename()
                 shutil.copy(origen,destino)
-            self.recursos[data].append(archivo)
+                self.objetos["Archivos"].append(str(archivo))
             self.actualizaArbol()
             #self.guardarProyecto()
         elif response == gtk.RESPONSE_CANCEL:
@@ -1337,8 +1059,10 @@ class Acciones:
             self.igu.barraCla.set_sensitive(False)
             self.igu.barraScr.set_sensitive(False)
             self.igu.statusbar.push(0,"Estas en el Proyecto")
-            self.actualizaVistaPropiedades(self.proyecto)
-        if len(self.nivel)==3:
+            self.seleccionado=self.proyecto
+        elif len(self.nivel)==2:
+            self.seleccionado=None
+        elif len(self.nivel)==3:
             if self.nivel[1]==0:
                 self.igu.statusbar.push(0,"Propíedad de la hoja"+str(self.nivel[2])+" el puntero es:"+str(self.nivel[2]))
                 self.puntero=self.nivel[2]
@@ -1356,8 +1080,10 @@ class Acciones:
                 self.igu.barraSon.set_sensitive(True)
                 self.igu.barraCla.set_sensitive(True)
                 self.igu.barraScr.set_sensitive(True)
-                self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][0])
-                self.__elimi=True
+                self.seleccionado=self.objetos["Hojas"][self.nivel[2]]["objeto"]
+                self.actulizaLienzo()
+            else:
+                self.seleccionado=None
         elif len(self.nivel)==4:
             if self.nivel[1]==0:
                 self.igu.barraRectangulo.set_sensitive(False)
@@ -1375,32 +1101,29 @@ class Acciones:
                 self.igu.barraCla.set_sensitive(False)
                 self.igu.barraScr.set_sensitive(False)
                 self.puntero=self.nivel[2]
-                #print self.objetos[self.nivel[2]][self.nivel[3]+1]
-                #print self.igu.lienzo.get_main_frame().get_title()
-                self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]+1])
-                self.__elimi=True
+                self.seleccionado=self.objetos["Hojas"][self.nivel[2]]["hijos"][self.nivel[3]]["objeto"]
+                self.actulizaLienzo()
                 #self.igu.statusbar.push(0,"Propíedad de los objetos de la hoja"+str(self.nivel[2])+"-"+str(self.nivel))
             if self.nivel[1]==1:
+                self.puntero=self.nivel[3]
+                self.seleccionado=None
                 if self.nivel[2]==0:
                     self.igu.statusbar.push(0,"Imagenes")
                     self.actulizaLienzo(1)
-                    self.__elimi=True
                 if self.nivel[2]==1:
                     self.igu.statusbar.push(0,"sonidos")
                     self.actulizaLienzo(2)
-                    self.__elimi=True
                 if self.nivel[2]==2:
                     self.igu.statusbar.push(0,"videos")
                     self.actulizaLienzo(3)
-                    self.__elimi=True
                 if self.nivel[2]==3:
                     self.igu.statusbar.push(0,"Archivos")
                     self.actulizaLienzo(4)
-                    self.__elimi=True
-        else:
-            self.__elimi=False
-            
-        #self.actualizaVistaPropiedades()
+       
+        print "punteroArbol->self.Nivel(1325):"+str(self.nivel)
+        print self.seleccionado    
+        self.actualizaVistaPropiedades()
+
     def llenaListas(self,tipoLista):
         lista = gtk.ListStore(str)
         if tipoLista==1:
@@ -1438,20 +1161,20 @@ class Acciones:
                 lista.append([x])
         if tipoLista==8:
             lista.append(["None"])
-            for fila in range(len(self.recursos[0])-1):
-                lista.append([self.recursos[0][fila+1]])
+            for i in self.objetos["Imagenes"]:
+                lista.append([i])
         if tipoLista==9:
             lista.append(["Courier"])
-            for fila in range(len(self.recursos[3])-1):
-                lista.append([self.recursos[3][fila+1]])
+            for i in self.objetos["Archivos"]:
+                lista.append([i])
         if tipoLista==10:
             lista.append(["None"])
-            for fila in range(len(self.recursos[1])-1):
-                lista.append([self.recursos[1][fila+1]])
+            for i in self.objetos["Sonidos"]:
+                lista.append([i])
         if tipoLista==11:
             lista.append(["None"])
-            for fila in range(len(self.recursos[2])-1):
-                lista.append([self.recursos[2][fila+1]])
+            for i in self.objetos["Videos"]:
+                lista.append([i])
         if tipoLista==12:
             lista.append(["None"])
             lista.append(["center"])
@@ -1460,10 +1183,12 @@ class Acciones:
             lista.append(["justify"])
         return lista
     
-    def actualizaVistaPropiedades(self,objeto):
+    def actualizaVistaPropiedades(self):
         almacen = gtk.ListStore(str,str,gtk.TreeModel)
-        self.igu.statusbar.push(0,str(objeto.nombre))
+        #self.igu.statusbar.push(0,str(objeto.nombre))
         almacen.clear()
+        objeto=self.seleccionado
+
         if objeto.__class__== Escena:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
             almacen.append(["colorFondo",objeto.colorFondo,self.llenaListas(1)])
@@ -1680,69 +1405,66 @@ class Acciones:
             almacen.append(["nombre",objeto.nombre,self.llenaListas(4)])
             almacen.append(["ancho",objeto.ancho,self.llenaListas(4)])
             almacen.append(["alto",objeto.alto,self.llenaListas(4)])
-            almacen.append(["maximizado",objeto.maximizado,self.llenaListas(3)])
-        
-        
+            almacen.append(["maximizado",objeto.maximizado,self.llenaListas(3)])       
         
         self.igu.panelPropiedades.set_model(almacen)
-        self.actulizaLienzo()
+        if objeto==None:
+            ls=self.igu.panelPropiedades.get_model()
+            if ls!=None:
+                ls.clear()
+        #self.actulizaLienzo()
     
     def eliminarObjetos(self,widget):
-        if self.proyecto=="":
+        if self.proyecto==None:
             self.igu.statusbar.push(0,"¿Qué Intentas Eliminar?")
-            return
-        if self.__elimi==True:
+        elif self.seleccionado==None:
+            if len(self.nivel)==4:
+                tmp=str(os.path.dirname(os.path.realpath(__file__)))+"/"+self.proyecto.nombre
+                if self.nivel[2]==0:
+                    os.remove(tmp+"/recursos/imagenes/"+str(self.objetos["Imagenes"][self.nivel[3]]))
+                    del self.objetos["Imagenes"][self.nivel[3]]
+                    self.igu.statusbar.push(0,"Eliminada la Imagen")
+                elif self.nivel[2]==1:
+                    os.remove(tmp+"/recursos/sonidos/"+str(self.objetos["Sonidos"][self.nivel[3]]))
+                    del self.objetos["Sonidos"][self.nivel[3]]
+                    self.igu.statusbar.push(0,"Eliminado el Sonido")
+                elif self.nivel[2]==2:
+                    os.remove(tmp+"/recursos/videos/"+str(self.objetos["Videos"][self.nivel[3]]))
+                    del self.objetos["Videos"][self.nivel[3]]
+                    self.igu.statusbar.push(0,"Eliminado el Video")
+                elif self.nivel[2]==3:
+                    os.remove(tmp+"/recursos/archivos/"+str(self.objetos["Archivos"][self.nivel[3]]))
+                    del self.objetos["Archivos"][self.nivel[3]]
+                    self.igu.statusbar.push(0,"Eliminado el Archivo")
+                else:
+                    self.igu.statusbar.push(0,"¿Que desea eliminar?")
+            else:
+                self.igu.statusbar.push(0,"Selecciona un objeto a eliminar")
+        elif self.seleccionado.__class__==Proyecto:
+            self.igu.statusbar.push(0,"No se puede eliminar el proyecto!!!!")
+        else:
             respuesta=self.igu.cuadroMensajes("Confirmar Eliminar Objeto","Esta Seguro de Eliminar Este Objeto",gtk.MESSAGE_WARNING,gtk.BUTTONS_YES_NO)
             if respuesta==gtk.RESPONSE_YES:
-                modelo = self.igu.treeview.get_model()
-                if len(self.nivel)==3:
-                    if self.nivel[1]==0:
-                        del self.objetos[self.puntero]
-                        del self.proyecto.paginas[self.puntero]
-                        self.actualizaArbol()
-                elif len(self.nivel)==4:
-                    if self.nivel[1]==0:
-                        #print "Eliminar Objeto"+str(self.nivel[3])+" de la Hoja"+str(self.nivel[2])
-                        recurso= self.objetos[self.nivel[2]][self.nivel[3]+1].nombre
-                        del self.objetos[self.nivel[2]][self.nivel[3]+1]
-                        self.actualizaArbol()
-                        try:
-                            self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]+1])
-                        except IndexError,e:
-                            self.actualizaVistaPropiedades(self.objetos[self.nivel[2]][self.nivel[3]])
-                    if self.nivel[1]==1:
-                        recurso= self.recursos[self.nivel[2]][self.nivel[3]+1]
-                        print recurso
-                        a=self.igu.cuadroMensajes("Confirmar Eliminar Objeto","Esta Seguro de Eliminar Este Objeto ("+str(recurso)+")",gtk.MESSAGE_WARNING,gtk.BUTTONS_YES_NO)
-                        if a==gtk.RESPONSE_YES:
-                            if self.nivel[2]==0:
-                                os.remove(self.proyecto.ruta+"/recursos/imagenes/"+str(recurso))
-                            if self.nivel[2]==1:
-                                os.remove(self.proyecto.ruta+"/recursos/sonidos/"+str(recurso))
-                            if self.nivel[2]==2:
-                                os.remove(self.proyecto.ruta+"/recursos/videos/"+str(recurso))
-                            if self.nivel[2]==3:
-                                os.remove(self.proyecto.ruta+"/recursos/archivos/"+str(recurso))
-                            del self.recursos[self.nivel[2]][self.nivel[3]+1]
-                            self.actualizaArbol()
-        self.__elimi=False
-        self.igu.barraGua.set_sensitive(True)
-        self.igu.barraGuc.set_sensitive(True)
-        self.igu.gua.set_sensitive(True)
-        self.igu.guc.set_sensitive(True)
-        texto ="Se ha Eliminado "+str(recurso)
-        self.igu.statusbar.push(0,texto)
-    
-    def _cambiaAtributo( self,widget, fila, valor, columna):
+                if self.seleccionado.__class__==Escena:
+                    ob=self.objetos["Hojas"][self.puntero]["objeto"].nombre
+                    del self.objetos["Hojas"][self.puntero]
+                    self.igu.statusbar.push(0,"Eliminada La Hoja "+str(ob))
+                else:
+                    ob=self.objetos["Hojas"][self.puntero]["hijos"][self.nivel[3]]["objeto"].nombre
+                    del self.objetos["Hojas"][self.puntero]["hijos"][self.nivel[3]]
+                    self.igu.statusbar.push(0,"Eliminado el Objeto "+str(ob))
+
+                self.igu.barraGua.set_sensitive(True)
+                self.igu.barraGuc.set_sensitive(True)
+                self.igu.gua.set_sensitive(True)
+                self.igu.guc.set_sensitive(True)
+        self.actualizaArbol()
+
+    def _cambiaAtributo( self,widget, fila, valor, columna):#Ajustada y Lista
         modelo = self.igu.panelPropiedades.get_model()
         modelo[fila][columna] = valor
         atributo=modelo[fila][0]
-        if len(self.nivel)==3:
-            s=self.objetos[self.puntero][0].__dict__
-        if len(self.nivel)==4:
-            s=self.objetos[self.puntero][self.nivel[3]+1].__dict__
-        if len(self.nivel)==1:
-            s=self.proyecto.__dict__
+        s=self.seleccionado.__dict__
         s[atributo]=valor
         self.actulizaLienzo()
         self.EDITADO=1
