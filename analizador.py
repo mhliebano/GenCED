@@ -183,16 +183,23 @@ class Analizador():
         if re.search("^\t",linea):
             resultado= (0,1,"Elemento de bloque")
         else:
-            token=linea.split("->")[0]
-            nombre=linea.split("->")[1]
-            if token in variablesValidas:
-                resultado=self.__analisaVarible(token,nombre,"fuera")
-            elif token in eventosValidos:
-                pass
-            elif token in eventosObjetos:
-                pass
-            elif token=="func":
-                pass
+            if re.search("->",linea):
+                token=linea.split("->")[0]
+                nombre=linea.split("->")[1]
+                if token in variablesValidas:
+                    resultado=self.__analisaVarible(token,nombre,"fuera")
+                elif token in eventosValidos:
+                    contexto="dentro"
+                    pass
+                elif token in eventosObjetos:
+                    contexto="dentro"
+                    pass
+                elif token=="func":
+                    pass
+                elif token=="fin":
+                    
+                else:
+                    resultado= (0,0,None)
             else:
                 resultado= (0,0,None)
         return resultado
@@ -203,7 +210,7 @@ class Analizador():
             print nombre
             variable=nombre.split("=")[0]
             asignacion=nombre.split("=")[1]
-            #contiene solo letras minusculas?
+            #contiene solo letras minusculas (variable simple)?
             if re.search("^[a-z]*$",variable):
                 #esta vacia la asignacion
                 if asignacion==None:
@@ -222,6 +229,7 @@ class Analizador():
                         t="var "+variable+" = '"+asignacion+"';"
                     else:
                         t=variable+" = '"+asignacion+"';"
+                #es una asignacion aritemtica
                 elif asignacion.split("(")[0]=="aritmetica":
                         atr=asignacion.split("(")[1]
                         atr=atr[0:len(atr)-1]
@@ -229,10 +237,11 @@ class Analizador():
                             t="var "+variable+"="+str(atr)+";"
                         else:
                             t=variable+"="+str(atr)+";"
+                #es un arreglo
                 elif asignacion.split("(")[0]=="arreglo":
                     atr=asignacion.split("(")[1]
-                    atr=atr[0:len(atr)-1]
-                    if len(atr)==0:
+                    atributo=atr[0:len(atr)-1]
+                    if len(atributo)==0:
                         if contexto=="fuera":
                             t="var "+variable+"=new Array();"
                         else:
@@ -242,6 +251,7 @@ class Analizador():
                             t="var "+variable+"=new Array("+str(atr)+");"
                         else:
                             t=variable+"=new Array("+str(atr)+");"
+                #es un un numero aleatorio?
                 elif asignacion.split("(")[0]=="aleatorio":
                     atr=asignacion.split("(")[1]
                     atr=atr[0:len(atr)-1]
@@ -249,6 +259,7 @@ class Analizador():
                         t="var "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
                     else:
                         t=variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                #leer un dato del cache?
                 elif asignacion.split("(")[0]=="leerDato":
                     atr=asignacion.split("(")[1]
                     atr=atr[0:len(atr)-1]
@@ -260,45 +271,75 @@ class Analizador():
                 else:
                     return (0,2,None)
                 return (1,0,t) 
-            #es una variable de arreglo?
+            #es una variable de arreglo que proviene de un arreglo?
             elif re.search("^[a-z]+\[\d+\]",variable):
+                #el arreglo esta ya declarado?
                 if variable.split("[")[0] in variablesDeclaradas:
+                    #esta vacia la asignacion
+                    if asignacion==None:
+                        return (0,1,None)
                     #es una variable numerica?
-                    if re.search("^[0-9]*.[0-9]*$",asignacion):
+                    elif re.search("^[0-9]*.[0-9]*$",asignacion):
                         #print "posible numero"
-                        script=script+"var "+variable+" = "+asignacion+";"
+                        if contexto=="fuera":
+                            t="var "+variable+" = "+asignacion+";"
+                        else:
+                            t=variable+" = "+asignacion+";"
                     #es una variable de texto
                     elif re.search("^\"*.*\"$",asignacion):
                         #print "posible cadena"
-                        script=script+"var "+variable+" = '"+asignacion+"';"
+                        if contexto=="fuera":
+                            t="var "+variable+" = '"+asignacion+"';"
+                        else:
+                            t=variable+" = '"+asignacion+"';"
+                    #es una asignacion aritemtica
                     elif asignacion.split("(")[0]=="aritmetica":
-                        atr=asignacion.split("(")[1]
-                        atr=atr[0:len(atr)-1]
-                        script=script+"var "+variable+"="+str(atr)+";"
+                            atr=asignacion.split("(")[1]
+                            atr=atr[0:len(atr)-1]
+                            if contexto=="fuera":
+                                t="var "+variable+"="+str(atr)+";"
+                            else:
+                                t=variable+"="+str(atr)+";"
+                    #es un arreglo
                     elif asignacion.split("(")[0]=="arreglo":
                         atr=asignacion.split("(")[1]
                         atr=atr[0:len(atr)-1]
                         if len(atr)==0:
-                            script+="var "+variable+"=new Array();"
+                            if contexto=="fuera":
+                                t="var "+variable+"=new Array();"
+                            else:
+                                t=variable+"=new Array();"
                         else:
-                            script+="var "+variable+"=new Array("+str(atr)+");"
+                            if contexto=="fuera":
+                                t="var "+variable+"=new Array("+str(atr)+");"
+                            else:
+                                t=variable+"=new Array("+str(atr)+");"
+                    #es un un numero aleatorio?
                     elif asignacion.split("(")[0]=="aleatorio":
                         atr=asignacion.split("(")[1]
                         atr=atr[0:len(atr)-1]
-                        script=script+" "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                        if contexto=="fuera":
+                            t="var "+variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                        else:
+                            t=variable+"=Math.floor((Math.random() * "+str(atr)+") + 1);"
+                    #leer un dato del cache?
                     elif asignacion.split("(")[0]=="leerDato":
                         atr=asignacion.split("(")[1]
                         atr=atr[0:len(atr)-1]
-                        script=script+str(variable)+"=sessionStorage."+str(atr)+";"
+                        if contexto=="fuera":
+                            t="var "+str(variable)+"=sessionStorage."+str(atr)+";"
+                        else:
+                            t=str(variable)+"=sessionStorage."+str(atr)+";"
                     #ninguna de las anteriores
                     else:
-                        descrError= "ERROR en la linea "+str(i+1)+" (311)> Al arreglo "+str(nombre)+" no se le puede asignar ese valor"
+                        return (0,2,None)
+                    return (1,0,t)
                 else:
                     descrError= "ERROR en la linea "+str(i+1)+" (314)=> La asignacion "+str(nombre)+" no pertenece a un arreglo"
             #no tiene solo letras minusculas
             else:
                 return (0,4,None)
-        #No esta asignada
+        #No tiene asignacion explicita 
         else:
             return (0,3,None)
             
@@ -309,11 +350,9 @@ class Analizador():
         "La variable no se le puede asignar ese valor",
         "La variable requiere de una asignacion (=)",
         "La variable solo puede contener letras minusculas"]
-        tipoLinea=["variable"]
-        eventosValidos=["cronometroSistema","cicloSistema","alAbrir","alCerrar","alPresionarTecla","alSoltarTecla","alPulsarTecla","alArrastrar","alFinArrastrar"]
-        eventosObjetos=["click","dobleClick","ratonSobre","ratonFuera","ratonPresionado","ratonLiberado"]
+        tipoLinea=["variable","inicio bloque","fin de bloque"]
         elementosBloque=["\tpropiedad","\tmostrar","\tocultar","\trotar","\tmover","\tredimensionar","\tmensaje","\tconfirmacion","\tentrada","\tmostrarPantalla","\tinc","\tdec","\tsonido","\tvideo","\thoja","\tSi","\tescribirDato","\tleerDato","\ttecla","\tesperar","\tcronometro","\tarreglo"]
-        variablesValidas=["varg","\tvarl","\tvarg"]
+
         variablesDeclaradas=[]
         funcionesDeclaradas=[]
         colores={"defecto":"default","Negro":"#000000","Gris Oscuro":"#696969","Gris":"#808080","Gris Claro":"#A9A9A9","Blanco":"#FFFFFF","Rojo Oscuro":"#8B0000","Rojo":"#FF0000","Rojo Claro":"#FA8072","Rosado Oscuro":"#FF1493","Rosado":"#FF69B4","Rosado Claro":"#FFB6C1","Fucsia Oscuro":"#8A2BE2","Fucsia":"#FF00FF","Fucsia Claro":"#CD5C5C","Marron Oscuro":"#800000","Marron":"#8B4513","Marron Claro":"#A0522D","Naranja Oscuro":"#FF8C00","Naranja":"#FF4500","Naranja Claro":"#FF6347","Purpura Oscuro":"#4B0082","Purupura":"#800080","Purpura Claro":"#EE82EE","Amarillo Oscuro":"#FFD700","Amarillo":"#FFFF00","Amarillo Claro":"#F0E68C","Teal":"#008080","Azul Oscuro":"#000080","Azul":"#0000FF","Azul Claro":"#00BFFF","AguaMarina Oscuro":"#1E90FF","AguaMarina":"#00FFFF","AguaMarina Claro":"#00BFFF","Verde Oscuro":"#006400","Verde":"#008000","Verde Claro":"#3CB371","Lima":"#00FF00","Oliva Oscuro":"#556B2F","Oliva":"#808000","Oliva Claro":"#BDB76B"}
